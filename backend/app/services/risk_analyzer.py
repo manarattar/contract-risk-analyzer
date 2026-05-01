@@ -73,6 +73,37 @@ DETECT_PROMPT = """Analyze this contract excerpt and return ONLY valid JSON.
 }}"""
 
 
+BATCH_CLAUSE_PROMPT = """Analyze these {n} contract clauses against standard commercial contracting practice.
+
+Contract context: {contract_type} | Apparently weaker party: {weaker_party}
+
+━━━ STANDARD CLAUSE BASELINES — Do NOT score these as Moderate Risk or higher ━━━
+• Liability cap = contract value with carve-outs for gross negligence / fraud / data breach → Acceptable Standard, score 15–25
+• Milestone-based payment in software / service agreements → Acceptable Standard, score 10–20
+• Written change request / change order process → Best Practice, score 5–15
+• 30-day payment terms → Acceptable Standard, score 10–20
+• 30-day or longer termination notice → Acceptable Standard, score 10–25
+• Arbitration or mediation with named venue and rules → Acceptable Standard, score 10–20
+• Entire agreement clause requiring written amendments → Acceptable Standard, score 10–15
+• IP: client owns custom deliverables; provider retains pre-existing IP with license → Best Practice, score 5–15
+• Confidentiality with exceptions for legal obligations → Acceptable Standard, score 10–20
+• Governing law naming a clear, specific jurisdiction → Acceptable Standard, score 5–15
+
+━━━ SCORING RUBRIC ━━━
+• 0–20: Best Practice • 21–40: Acceptable Standard / Minor Improvement
+• 41–60: Moderate Risk • 61–80: High Risk • 81–100: Critical Risk
+
+━━━ FALSE POSITIVE GUARDRAIL ━━━
+Before assigning Moderate Risk or higher: Is this actually harmful, or a normal contractual mechanism? Would a competent commercial lawyer accept this? If in doubt, assign Acceptable Standard.
+
+━━━ CLAUSES ━━━
+{clauses_text}
+
+Return ONLY a valid JSON array of exactly {n} objects (one per clause, in order). No markdown, no explanation.
+Each object must have:
+{{"clause_title":"...","clause_type":"Termination|Liability|Payment|Confidentiality|Intellectual Property|Data Protection|Governing Law|Non-compete|Renewal|Indemnity|Dispute Resolution|Other","category":"Best Practice|Acceptable Standard|Minor Improvement|Moderate Risk|High Risk|Critical Risk","risk_score":<int 0-100>,"affected_party":"Client|Provider|Both Parties","what_works_well":"...","risk_explanation":"...","suggested_revision":"...","negotiation_advice":"...","enforceability_concern":<true|false>}}"""
+
+
 CLAUSE_PROMPT = """Analyze this contract clause against standard commercial contracting practice.
 
 Contract context: {contract_type} | Apparently weaker party: {weaker_party}
@@ -360,6 +391,56 @@ def analyze_clause(
                 time.sleep(0.5)
     raise last_exc
 
+BATCH_SIZE = 3  # clauses per LLM call
+
+
+def _analyze_clauses_batch(
+    clauses: list,
+    contract_type: str,
+    weaker_party: str,
+) -> list[ClauseAnalysis]:
+    """Analyze a batch of up to BATCH_SIZE clauses in a single LLM call."""
+    n = len(clauses)
+    clauses_text = "\n\n".join(
+        f"--- Clause {i+1} ---\n{c['text']}" for i, c in enumerate(clauses)
+    )
+    settings = get_settings()
+    client = _get_client()
+    prompt = BATCH_CLAUSE_PROMPT.format(
+        n=n,
+        contract_type=contract_type,
+        weaker_party=weaker_party,
+        clauses_text=clauses_text,
+    )
+    for attempt in range(2):
+        try:
+            if attempt == 1:
+                prompt += "\n\nReturn ONLY the JSON array. No other text."
+            raw = _call_llm(client, settings, prompt)
+            items = _extract_json(raw)
+            if not isinstance(items, list):
+                items = [items]
+            results = []
+            for data, clause in zip(items, clauses):
+                category_str = data.get("category", "Moderate Risk")
+                data["original_text"] = clause["text"]
+                data["risk_level"] = _category_to_risk_level(category_str)
+                data["risk_score"] = _clamp_score_to_category(
+                    max(0, min(100, int(data.get("risk_score", 50)))),
+                    category_str,
+                )
+                data["enforceability_concern"] = bool(data.get("enforceability_concern", False))
+                data["what_works_well"] = data.get("what_works_well", "")
+                data["affected_party"] = data.get("affected_party", "Both Parties")
+                results.append(ClauseAnalysis(**data))
+            return results
+        except Exception as e:
+            if attempt == 0:
+                time.sleep(1)
+            else:
+                raise
+
+
 # ---------------------------------------------------------------------------
 # Stage 3 — Cross-clause contradiction validation
 # ---------------------------------------------------------------------------
@@ -434,39 +515,33 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     contract_type = context.get("contract_type", "Unknown")
     weaker_party = context.get("apparent_weaker_party", "Unknown")
 
-    # Stage 2: classify each clause with context + neighbor awareness
+    # Stage 2: classify clauses in batches of BATCH_SIZE (reduces API calls ~3x)
     analyzed_clauses: List[ClauseAnalysis] = []
     found_types: set = set()
-    prev_summary = ""
 
-    for clause in clauses:
+    batches = [clauses[i:i + BATCH_SIZE] for i in range(0, len(clauses), BATCH_SIZE)]
+    for batch in batches:
         try:
-            result = analyze_clause(
-                clause["text"],
-                contract_type=contract_type,
-                weaker_party=weaker_party,
-                prev_summary=prev_summary,
-            )
-            analyzed_clauses.append(result)
-            found_types.add(result.clause_type)
-            prev_summary = f"{result.clause_title} ({result.clause_type}): {result.category}"
-            time.sleep(4.5)  # stay under Gemini free tier 15 RPM limit
+            results = _analyze_clauses_batch(batch, contract_type, weaker_party)
+            analyzed_clauses.extend(results)
+            for r in results:
+                found_types.add(r.clause_type)
+            time.sleep(4.5)  # stay under Gemini free tier 15 RPM
         except Exception:
-            placeholder = ClauseAnalysis(
-                clause_title=f"Clause {clause['index'] + 1}",
-                clause_type="Other",
-                original_text=clause["text"],
-                category=ClauseCategory.MINOR_IMPROVEMENT,
-                risk_level=RiskLevel.LOW,
-                risk_score=10,
-                affected_party=AffectedParty.BOTH,
-                what_works_well="",
-                risk_explanation="Analysis unavailable for this clause.",
-                suggested_revision="Manual review recommended.",
-                negotiation_advice="Consult a legal professional.",
-            )
-            analyzed_clauses.append(placeholder)
-            prev_summary = ""
+            for clause in batch:
+                analyzed_clauses.append(ClauseAnalysis(
+                    clause_title=f"Clause {clause['index'] + 1}",
+                    clause_type="Other",
+                    original_text=clause["text"],
+                    category=ClauseCategory.MINOR_IMPROVEMENT,
+                    risk_level=RiskLevel.LOW,
+                    risk_score=10,
+                    affected_party=AffectedParty.BOTH,
+                    what_works_well="",
+                    risk_explanation="Analysis unavailable for this clause.",
+                    suggested_revision="Manual review recommended.",
+                    negotiation_advice="Consult a legal professional.",
+                ))
 
     # Stage 3: overall summary + quality assessment + missing clause relevance
     clause_summary = "\n".join(
