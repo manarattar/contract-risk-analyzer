@@ -316,8 +316,8 @@ def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -
             )
             return response.choices[0].message.content
         except openai.RateLimitError:
-            if attempt < 2:
-                time.sleep(62)
+            if attempt < 1:
+                time.sleep(30)
             else:
                 raise
 
