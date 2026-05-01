@@ -3,6 +3,7 @@ import re
 import time
 from typing import List, Dict
 
+import openai
 from openai import OpenAI
 
 from app.config import get_settings
@@ -271,15 +272,23 @@ def _get_client() -> OpenAI:
 
 
 def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -> str:
-    response = client.chat.completions.create(
-        model=settings.model_name,
-        messages=[
-            {"role": "system", "content": SYSTEM_MESSAGE},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=temperature,
-    )
-    return response.choices[0].message.content
+    # Retry up to 3 times on rate-limit (429) with 65-second backoff
+    for attempt in range(3):
+        try:
+            response = client.chat.completions.create(
+                model=settings.model_name,
+                messages=[
+                    {"role": "system", "content": SYSTEM_MESSAGE},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=temperature,
+            )
+            return response.choices[0].message.content
+        except openai.RateLimitError:
+            if attempt < 2:
+                time.sleep(65)  # Gemini free tier resets each minute
+            else:
+                raise
 
 
 def _category_to_risk_level(category: str) -> RiskLevel:
@@ -441,7 +450,7 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
             analyzed_clauses.append(result)
             found_types.add(result.clause_type)
             prev_summary = f"{result.clause_title} ({result.clause_type}): {result.category}"
-            time.sleep(0.3)
+            time.sleep(4.5)  # stay under Gemini free tier 15 RPM limit
         except Exception:
             placeholder = ClauseAnalysis(
                 clause_title=f"Clause {clause['index'] + 1}",
@@ -498,7 +507,7 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     # Stage 4: contradiction validation
     contradictions: List[ContradictionFinding] = []
     try:
-        time.sleep(0.3)
+        time.sleep(4.5)
         contradictions = _analyze_contradictions(analyzed_clauses)
     except Exception:
         pass
