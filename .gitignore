@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Virtual environments
+backend/venv/
+backend/.venv/
+
+# Environment / secrets
+backend/.env
+.env
+
+# Runtime data (ephemeral — regenerated on startup)
+backend/data/
+backend/chroma/
+
+# Test caches
+.pytest_cache/
+backend/.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Render / CI
+*.log

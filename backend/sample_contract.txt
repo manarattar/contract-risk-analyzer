@@ -1,0 +1,50 @@
+SOFTWARE DEVELOPMENT SERVICES AGREEMENT
+
+This Software Development Services Agreement ("Agreement") is entered into as of January 1, 2025, between TechVenture Corp ("Client"), a Delaware corporation, and DevSolutions Ltd ("Vendor"), a UK limited company.
+
+1. SCOPE OF SERVICES
+
+Vendor agrees to provide software development services as detailed in the Statement of Work attached hereto as Exhibit A. Vendor shall have sole discretion in determining the manner and means by which the services are performed, provided that the deliverables meet the specifications set forth in Exhibit A.
+
+2. PAYMENT TERMS
+
+Client shall pay all invoices within fifteen (15) days of receipt. Late payments shall accrue interest at 2% per month compounded monthly. Client may not withhold, offset, or reduce any payment for any reason whatsoever, including disputes regarding deliverable quality, bugs, or service failures. All payments are non-refundable once made.
+
+3. INTELLECTUAL PROPERTY
+
+All work product, inventions, discoveries, and developments created by Vendor in connection with the services, including any pre-existing tools, frameworks, libraries, or methodologies used or incorporated in the delivery of services, shall become the exclusive property of the Client upon receipt of full payment. Vendor warrants it has the right to transfer such ownership.
+
+4. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL VENDOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES, INCLUDING LOSS OF PROFITS, LOSS OF DATA, OR BUSINESS INTERRUPTION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. VENDOR'S TOTAL AGGREGATE LIABILITY FOR ANY CLAIMS ARISING UNDER THIS AGREEMENT SHALL NOT EXCEED THE TOTAL FEES PAID BY CLIENT IN THE THIRTY (30) DAYS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM.
+
+5. TERMINATION
+
+Either party may terminate this Agreement for convenience upon seven (7) calendar days' written notice to the other party. In the event of termination by Client, Client shall pay Vendor for all work completed to the date of termination, plus a termination fee equal to twenty-five percent (25%) of the total fees that would have been payable for the remaining term of the Agreement. Vendor may terminate immediately and without notice if Client fails to make any payment when due.
+
+6. CONFIDENTIALITY
+
+Each party agrees to keep confidential all information designated in writing as "Confidential" by the disclosing party. Neither party shall disclose confidential information to third parties without prior written consent. This obligation of confidentiality shall survive termination of this Agreement for a period of three (3) years.
+
+7. NON-SOLICITATION
+
+During the term of this Agreement and for a period of two (2) years following its termination or expiration, Client agrees not to directly or indirectly hire, solicit, recruit, or engage as a contractor any employee, contractor, or subcontractor of Vendor, regardless of whether such individual was directly involved in the provision of services under this Agreement. This restriction applies globally across all jurisdictions.
+
+8. AUTO-RENEWAL
+
+This Agreement shall automatically renew for successive one-year terms unless either party provides written notice of non-renewal at least ninety (90) days prior to the end of the then-current term. Vendor reserves the right to adjust pricing upon renewal with thirty (30) days' notice. Continued use of services after a price increase notification shall constitute acceptance of the new pricing.
+
+9. GOVERNING LAW
+
+This Agreement shall be governed by and construed in accordance with the laws of England and Wales. Any disputes arising out of or in connection with this Agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.
+
+10. ENTIRE AGREEMENT
+
+This Agreement, together with its Exhibits, constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior negotiations, representations, or agreements. This Agreement may only be amended by a written instrument signed by authorized representatives of both parties.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first written above.
+
+TechVenture Corp                    DevSolutions Ltd
+By: ___________________            By: ___________________
+Name: Jane Smith                   Name: John Doe
+Title: CEO                         Title: Managing Director
