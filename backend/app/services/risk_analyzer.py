@@ -317,7 +317,7 @@ def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -
             return response.choices[0].message.content
         except openai.RateLimitError:
             if attempt < 2:
-                time.sleep(65)  # Gemini free tier resets each minute
+                time.sleep(62)
             else:
                 raise
 
@@ -391,7 +391,7 @@ def analyze_clause(
                 time.sleep(0.5)
     raise last_exc
 
-BATCH_SIZE = 3  # clauses per LLM call
+BATCH_SIZE = 10  # clauses per LLM call — keeps most contracts to a single batch
 
 
 def _analyze_clauses_batch(
@@ -526,7 +526,6 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
             analyzed_clauses.extend(results)
             for r in results:
                 found_types.add(r.clause_type)
-            time.sleep(4.5)  # stay under Gemini free tier 15 RPM
         except Exception:
             for clause in batch:
                 analyzed_clauses.append(ClauseAnalysis(
@@ -582,7 +581,6 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     # Stage 4: contradiction validation
     contradictions: List[ContradictionFinding] = []
     try:
-        time.sleep(4.5)
         contradictions = _analyze_contradictions(analyzed_clauses)
     except Exception:
         pass
