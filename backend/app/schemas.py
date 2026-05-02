@@ -103,3 +103,39 @@ class QARequest(BaseModel):
 class QAResponse(BaseModel):
     answer: str
     sources: List[str]
+
+
+# ── Comparison schemas ──────────────────────────────────────────────────────
+
+class ClauseStatus(str, Enum):
+    IMPROVED = "improved"
+    WORSENED = "worsened"
+    UNCHANGED = "unchanged"
+    ADDED = "added"
+    REMOVED = "removed"
+
+
+class ClauseComparison(BaseModel):
+    clause_type: str
+    clause_a: Optional[ClauseAnalysis] = None
+    clause_b: Optional[ClauseAnalysis] = None
+    risk_delta: int = 0
+    status: ClauseStatus
+
+
+class ContractComparison(BaseModel):
+    comparison_id: str
+    contract_a_name: str
+    contract_b_name: str
+    analysis_a: ContractAnalysis
+    analysis_b: ContractAnalysis
+    overall_delta: int
+    winner: str  # "a" | "b" | "equal"
+    clause_comparisons: List[ClauseComparison]
+    key_differences: List[str]
+
+
+class CompareStatusResponse(BaseModel):
+    comparison_id: str
+    status: str
+    error_message: Optional[str] = None

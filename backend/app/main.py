@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import create_tables
-from app.routers import upload, analysis, qa, report
+from app.routers import upload, analysis, qa, report, compare
 
 app = FastAPI(
     title="Contract Risk Analyzer API",
@@ -27,6 +27,7 @@ app.include_router(upload.router, prefix="/api")
 app.include_router(analysis.router, prefix="/api")
 app.include_router(qa.router, prefix="/api")
 app.include_router(report.router, prefix="/api")
+app.include_router(compare.router, prefix="/api")
 
 
 @app.on_event("startup")

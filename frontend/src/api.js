@@ -27,3 +27,16 @@ export const getReportUrl = (documentId) =>
   `${api.defaults.baseURL}/api/report/${documentId}`;
 
 export const checkHealth = () => api.get("/api/health");
+
+export const compareContracts = (fileA, fileB) => {
+  const form = new FormData();
+  form.append("file_a", fileA);
+  form.append("file_b", fileB);
+  return api.post("/api/compare", form, { headers: { "Content-Type": "multipart/form-data" } });
+};
+
+export const getCompareStatus = (comparisonId) =>
+  api.get(`/api/compare/status/${comparisonId}`);
+
+export const getCompareResult = (comparisonId) =>
+  api.get(`/api/compare/result/${comparisonId}`);

@@ -31,6 +31,18 @@ class Analysis(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Comparison(Base):
+    __tablename__ = "comparisons"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name_a = Column(String, nullable=False)
+    name_b = Column(String, nullable=False)
+    status = Column(String, default="processing")
+    result_json = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    error_message = Column(Text, nullable=True)
+
+
 def get_db():
     db = SessionLocal()
     try:
