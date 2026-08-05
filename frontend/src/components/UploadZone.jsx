@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import Icon from "./Icon";
 
 const ACCEPTED = { "application/pdf": [".pdf"], "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"], "text/plain": [".txt"] };
 
@@ -32,7 +33,7 @@ export default function UploadZone({ onUpload, loading }) {
           ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <input {...getInputProps()} />
-        <div className="text-5xl mb-4">📄</div>
+        <Icon name="file" size={48} className="mx-auto mb-4 text-gray-300" />
         {isDragActive ? (
           <p className="text-blue-600 font-medium text-lg">Drop your contract here...</p>
         ) : (

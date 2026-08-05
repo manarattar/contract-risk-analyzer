@@ -8,6 +8,7 @@ import ClauseTable from "./components/ClauseTable";
 import ChatBox from "./components/ChatBox";
 import ReportButton from "./components/ReportButton";
 import Disclaimer from "./components/Disclaimer";
+import Icon from "./components/Icon";
 
 const STAGES = { idle: "idle", uploading: "uploading", analyzing: "analyzing", results: "results", error: "error" };
 
@@ -125,7 +126,7 @@ export default function App() {
       <header className="bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⚖️</span>
+            <Icon name="scale" size={26} className="text-blue-600" />
             <div>
               <h1 className="text-lg font-bold text-gray-900">Contract Risk Analyzer</h1>
               <p className="text-xs text-gray-400">AI-powered risk detection — not legal advice</p>
@@ -173,17 +174,45 @@ export default function App() {
               </button>
               <button
                 onClick={() => setMode("compare")}
-                className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors
+                className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5
                   ${mode === "compare" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 Compare Contracts
+                <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-semibold">New</span>
               </button>
             </div>
+            {mode === "compare" && (
+              <p className="text-xs text-gray-400 text-center -mt-4">
+                Upload two versions of the same contract — see exactly what changed and whether it got riskier
+              </p>
+            )}
 
             {mode === "single" ? (
               <UploadZone onUpload={handleUpload} loading={false} />
             ) : (
               <CompareUploadZone onCompare={handleCompare} loading={false} />
+            )}
+
+            {mode === "single" && (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-xs text-gray-400">Don't have a contract handy?</p>
+                <button
+                  onClick={async () => {
+                    const res = await fetch("/sample_contract.pdf");
+                    const blob = await res.blob();
+                    const file = new File([blob], "sample_contract.pdf", { type: "application/pdf" });
+                    handleUpload(file);
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline underline-offset-2 transition"
+                >
+                  Try with a sample high-risk contract →
+                </button>
+                <div className="flex flex-wrap justify-center gap-3 mt-2 text-xs text-gray-400">
+                  <span>✓ Freelancers reviewing client contracts</span>
+                  <span>✓ Startups checking vendor agreements</span>
+                  <span>✓ Anyone before signing an NDA</span>
+                </div>
+              </div>
             )}
 
             <div className="w-full max-w-2xl">
@@ -219,7 +248,7 @@ export default function App() {
         {/* Single: error */}
         {stage === STAGES.error && (
           <div className="flex flex-col items-center mt-24 gap-4">
-            <div className="text-5xl">⚠️</div>
+            <Icon name="alert" size={48} className="text-red-500" />
             <p className="text-red-600 font-medium text-center max-w-md">{errorMsg}</p>
             <button onClick={reset} className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">
               Try Again
@@ -230,7 +259,7 @@ export default function App() {
         {/* Compare: error */}
         {mode === "compare" && comparePhase === "error" && (
           <div className="flex flex-col items-center mt-24 gap-4">
-            <div className="text-5xl">⚠️</div>
+            <Icon name="alert" size={48} className="text-red-500" />
             <p className="text-red-600 font-medium text-center max-w-md">{compareError}</p>
             <button onClick={resetCompare} className="px-5 py-2 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700">
               Try Again
@@ -249,6 +278,7 @@ export default function App() {
             <RiskDashboard analysis={analysis} />
             <ClauseTable clauses={analysis.clauses} />
             <ChatBox documentId={documentId} />
+            <FeedbackBar context={{ document_id: documentId, type: "analysis" }} />
             <Disclaimer />
           </div>
         )}
@@ -261,11 +291,39 @@ export default function App() {
               <h2 className="text-2xl font-bold text-gray-900">Contract Comparison</h2>
             </div>
             <CompareView result={compareResult} />
+            <FeedbackBar context={{ type: "comparison" }} />
             <Disclaimer />
           </div>
         )}
 
       </main>
+    </div>
+  );
+}
+
+function FeedbackBar({ context }) {
+  const [rating, setRating] = useState(null);
+
+  function submit(value) {
+    setRating(value);
+    const log = JSON.parse(localStorage.getItem("contract_feedback") || "[]");
+    log.push({ ...context, rating: value, timestamp: new Date().toISOString() });
+    localStorage.setItem("contract_feedback", JSON.stringify(log));
+  }
+
+  return (
+    <div className="flex items-center gap-3 py-3 border-t border-gray-100">
+      <span className="text-sm text-gray-400">Was this analysis accurate?</span>
+      {rating === null ? (
+        <>
+          <button onClick={() => submit("up")} className="text-gray-400 hover:text-green-600 hover:scale-110 transition" title="Yes" aria-label="Accurate"><Icon name="thumbsUp" /></button>
+          <button onClick={() => submit("down")} className="text-gray-400 hover:text-red-600 hover:scale-110 transition" title="No" aria-label="Not accurate"><Icon name="thumbsDown" /></button>
+        </>
+      ) : (
+        <span className="text-sm text-blue-600 font-medium">
+          {rating === "up" ? "Thanks!" : "Thanks — noted."}
+        </span>
+      )}
     </div>
   );
 }
