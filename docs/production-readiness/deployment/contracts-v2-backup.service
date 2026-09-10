@@ -1,0 +1,7 @@
+[Unit]
+Description=Encrypted contract review backup excluding public demo records
+After=docker.service
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/usr/bin/python3 /srv/apps/contracts-v2/operations/backup.py

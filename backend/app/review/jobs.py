@@ -174,6 +174,8 @@ if __name__ == "__main__":
         sweep()
         run_once()
     else:
+        from app.review.operations import start_heartbeat
+        start_heartbeat()
         while True:
             sweep()
             if not run_once():

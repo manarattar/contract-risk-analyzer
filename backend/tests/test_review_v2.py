@@ -335,6 +335,15 @@ def test_evaluation_gate_rejects_invalid_metrics(value):
     assert not release_gate(report)["eligible"]
 
 
+def test_retention_denies_access_even_without_worker(client):
+    identifier, _ = processed(client)
+    with transaction() as conn:
+        conn.execute("UPDATE documents SET retention_until='2000-01-01T00:00:00+00:00' WHERE id=?",(identifier,))
+    assert client.get('/api/v2/documents',headers=auth()).json()['items'] == []
+    for suffix in ['', '/source', '/export']:
+        assert client.get(f'/api/v2/documents/{identifier}'+suffix,headers=auth()).status_code == 404
+
+
 def test_docx_tables_and_archive_safety(tmp_path):
     from docx import Document
     doc = Document()

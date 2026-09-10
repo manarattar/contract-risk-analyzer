@@ -1,0 +1,6 @@
+[Unit]
+Description=Contract review operational health check
+After=docker.service
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec contracts-v2 python -m app.review.operations

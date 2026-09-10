@@ -52,6 +52,8 @@ def enqueue(identifier, kind, filename, digest, context, mode, key, user):
         count = conn.execute("SELECT count(*) FROM documents WHERE workspace=? AND tombstone IS NULL", (user.workspace_id,)).fetchone()[0]
         if count >= (2 if user.demo else settings().max_documents):
             raise HTTPException(429, "Workspace document quota reached.")
+        if user.demo and conn.execute("SELECT count(*) FROM documents WHERE owner LIKE 'demo-%' AND tombstone IS NULL").fetchone()[0] >= 200:
+            raise HTTPException(429, 'Public demo capacity reached. Please retry later.')
         created = now()
         expiry = (datetime.now(timezone.utc) + (timedelta(minutes=30) if user.demo else timedelta(days=settings().retention_days))).isoformat()
         conn.execute("""INSERT INTO documents(id,workspace,owner,filename,kind,hash,context,mode,status,created,retention_until,idempotency)
@@ -75,7 +77,7 @@ def session(user: Principal = Depends(principal)):
 @router.get("/documents")
 def library(offset: int = Query(0, ge=0), user: Principal = Depends(principal)):
     with transaction() as conn:
-        rows = conn.execute("SELECT * FROM documents WHERE workspace=? AND owner=? AND tombstone IS NULL ORDER BY created DESC LIMIT 21 OFFSET ?", (user.workspace_id, user.id, offset)).fetchall()
+        rows = conn.execute("SELECT * FROM documents WHERE workspace=? AND owner=? AND tombstone IS NULL AND retention_until>? ORDER BY created DESC LIMIT 21 OFFSET ?", (user.workspace_id, user.id, now(), offset)).fetchall()
     return {"items": [public_document(r) for r in rows[:20]], "next_offset": offset+20 if len(rows)>20 else None}
 
 

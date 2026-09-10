@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.review.settings import settings
-from app.review.store import transaction
+from app.review.store import transaction, now
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -57,6 +57,6 @@ def can_write(user: Principal):
 def owned(conn, document_id, user, deleted=False):
     # Deliberately strict owner scope until shared-document grants are implemented.
     row = conn.execute("SELECT * FROM documents WHERE id=? AND workspace=? AND owner=?", (document_id, user.workspace_id, user.id)).fetchone()
-    if row is None or (row["tombstone"] and not deleted):
+    if row is None or (not deleted and (row["tombstone"] or row['retention_until'] <= now())):
         raise HTTPException(404, "Document not found.")
     return dict(row)

@@ -61,6 +61,8 @@ On suspected disclosure or misleading results: disable uploads/live processing, 
 
 ## Restore rehearsal required before pilot
 
+Update: the executed encrypted backup, deletion-replay rehearsal, tamper rejection and installed timers are recorded in `deployment/README.md`. That record supersedes the original “not tested” status for those specific local-host checks. Off-host disaster recovery and qualified pilot gates remain open.
+
 Use only synthetic data for rehearsal. Stop writes or take an SQLite-consistent backup (not an uncoordinated file copy), preserve tracked upload files, store encrypted backups separately, and test restoration into a fresh path. Replay tombstones before exposing restored data. Check foreign ownership denial, missing/orphan file reconciliation, lease recovery and export correctness. Measure actual RPO/RTO; the planned 24-hour/4-hour goals are not yet demonstrated.
 
 Container execution, Linux resource boundaries, production reverse proxy/TLS, SSO, backup expiry, incident delivery and a restore drill remain unverified here. The local browser uses loopback-only synthetic services and is not a deployment.
