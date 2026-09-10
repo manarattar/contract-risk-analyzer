@@ -1,3 +1,5 @@
+> Current release (2026-09-10): the public experimental AI trial is live. See [verified capabilities and limits](public-ai-trial-release.md). The audit and qualified-production roadmap are not a claim that every production gate is complete.
+
 > Latest deployed status (2026-09-10): public registration and private sandboxed manual uploads are live. See [public access release](public-access-release.md). Live AI remains pending; earlier audit findings describe the original baseline.
 
 # Contract-review assistant: production-readiness audit

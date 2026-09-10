@@ -98,7 +98,7 @@ async def upload(file: UploadFile = File(...), context: str = Form(...),
         ctx = Context.model_validate_json(context)
     except ValidationError:
         raise HTTPException(422, "Review context is invalid.")
-    if settings().mode == "live" and (not ctx.confirmed or ctx.contract_type == "Unknown"):
+    if settings().mode in {"trial", "live"} and (not ctx.confirmed or ctx.contract_type == "Unknown"):
         raise HTTPException(422, "Confirm supported contract context before live issue spotting.")
     identifier, kind, filename, digest = await receive(file)
     try:
@@ -264,6 +264,21 @@ def question(document_id: str, payload: Question, user: Principal = Depends(prin
         raise HTTPException(409, "Source extraction is not ready.")
     if re.search(r"sign|enforceab|legal advice|compliant", payload.question, re.I):
         return {"status": "abstained", "answer": "This assistant cannot determine legal enforceability or whether you should sign. Ask a qualified legal reviewer.", "sources": []}
+    if doc['mode'] in {'trial','live'}:
+        from app.review.pipeline import answer_question
+        with transaction() as conn:
+            current=owned(conn,document_id,user)
+            if current['ai_calls']>=settings().max_ai_calls_per_document:
+                raise HTTPException(429,'This document has reached its AI trial limit.')
+            conn.execute('UPDATE documents SET ai_calls=ai_calls+1 WHERE id=?',(document_id,))
+        try:
+            result=answer_question(json.loads(doc['source']),payload.question,json.loads(doc['context']))
+        except Exception:
+            raise HTTPException(503,'AI answer unavailable or could not be verified. The trial budget may be exhausted. Try source review instead.')
+        with transaction() as conn:
+            current=owned(conn,document_id,user)
+            if current['epoch']!=doc['epoch']:raise HTTPException(409,'Document changed. Reload the review.')
+        return result
     matches = source_search(json.loads(doc["source"]), payload.question)
     return {"status": "passages" if matches else "abstained",
             "answer": "Matching passages below. Verify whether they answer your question; no synthesized conclusion was generated." if matches else "I could not locate matching support in the extracted text. This does not establish that the term is absent.",

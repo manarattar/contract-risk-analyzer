@@ -12,7 +12,8 @@ r=c.post('/api/v2/accounts/register',json={'login':name,'password':password,'ack
 h={'Authorization':'Bearer '+r.json()['token']}
 r=c.post('/api/v2/accounts/register',json={'login':name+'-other','password':password,'acknowledged':True});assert r.status_code==201,r.text
 other={'Authorization':'Bearer '+r.json()['token']}
-assert c.get('/api/v2/session',headers=h).json()['upload_enabled']
+identity=c.get('/api/v2/session',headers=h).json()
+assert identity['upload_enabled']
 context={'contract_type':'Services agreement','party':'Synthetic customer','role':'Customer','governing_law':'Unknown','forum':'Unknown','objectives':['Liability'],'confirmed':True}
 records=[];checks=[]
 try:
@@ -25,10 +26,14 @@ try:
    if d['status'] not in ['queued','processing']:break
    time.sleep(1)
   assert d['status']=='ready',d
+  if identity['mode']=='trial':
+   assert d['result']['provenance']['mode']=='trial'
+   if filename.endswith('pdf'): assert d['result']['findings']
   assert c.get(path,headers=other).status_code==404
   assert c.get(path+'/export',headers=h).status_code==200
   answer=c.post(path+'/questions',headers=h,json={'question':'What are the liability terms?'})
-  assert answer.status_code==200 and answer.json()['sources']
+  assert answer.status_code==200 and answer.json()['sources'],answer.text
+  if identity['mode']=='trial':assert answer.json()['status']=='answered',answer.text
   if filename.endswith('pdf'):
    r=c.get(path+'/pages/1',headers=h);assert r.status_code==200,r.text
    assert r.json()['image'].startswith('data:image/png;base64,')
@@ -49,4 +54,4 @@ finally:
  c.post('/api/v2/accounts/logout',headers=h)
  c.post('/api/v2/accounts/logout',headers=other)
 checks.append('deletion, purge and logout')
-print(json.dumps({'passed':True,'base':base,'checks':checks,'live_ai':False},indent=2))
+print(json.dumps({'passed':True,'base':base,'checks':checks,'live_ai':identity['mode']=='trial'},indent=2))

@@ -1,0 +1,48 @@
+name: contracts-review-v2
+x-service: &service
+  image: contracts-review-v2:${RELEASE_ID:?Set release ID}
+  env_file: /srv/stack/env/contracts-v2.env
+  user: "10001:10001"
+  volumes:
+    - review_data:/app/data/review-v2
+  read_only: true
+  tmpfs: ["/tmp:size=128m,mode=1777"]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  pids_limit: 64
+  mem_limit: 768m
+  cpus: 1.0
+services:
+  api:
+    <<: *service
+    container_name: contracts-v2
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]
+    networks: [web]
+    ports: ["127.0.0.1:18800:8000"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/ready', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  worker:
+    <<: *service
+    container_name: contracts-v2-worker
+    command: ["python", "-m", "app.review.jobs"]
+    networks: [egress]
+    restart: unless-stopped
+  initialize:
+    <<: *service
+    profiles: [setup]
+    command: ["python", "-m", "app.review.store"]
+    network_mode: none
+networks:
+  egress:
+    external: true
+    name: contracts_review_egress
+  web:
+    external: true
+    name: manarattar_web
+volumes:
+  review_data:
+    name: contracts_review_v2_data

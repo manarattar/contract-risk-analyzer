@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class ReviewSettings(BaseSettings):
     # Separate prefix prevents old .env values from enabling a new capability.
     model_config = SettingsConfigDict(env_prefix="REVIEW_", extra="ignore", hide_input_in_errors=True)
-    mode: Literal["disabled", "demo", "manual", "live"] = "disabled"
+    mode: Literal["disabled", "demo", "manual", "trial", "live"] = "disabled"
     data_dir: Path = Path("./data/review-v2")
     principals_json: str = "[]"
     upload_enabled: bool = False
@@ -22,6 +22,8 @@ class ReviewSettings(BaseSettings):
     public_signup_enabled: bool = False
     max_accounts: int = Field(default=1000, ge=1, le=100000)
     demo_signing_key: str = ''
+    trial_ai_acknowledged: bool = False
+    daily_ai_budget_cents: int = Field(default=500, ge=10, le=2000)
     provider_handling_approved: bool = False
     evaluation_approved: bool = False
     evaluation_report: Path | None = None
@@ -66,10 +68,13 @@ class ReviewSettings(BaseSettings):
                 raise ValueError("Invalid role")
         if "*" in self.allowed_origins:
             raise ValueError("Explicit origins required")
-        if self.upload_enabled and (self.mode not in {"manual", "live"} or not self.parser_isolation_approved):
+        if self.upload_enabled and (self.mode not in {"manual", "trial", "live"} or not self.parser_isolation_approved):
             raise ValueError("Uploads require manual/live mode and approved parser isolation")
         if self.page_rendering_enabled and not self.parser_isolation_approved:
             raise ValueError("Page rendering requires approved renderer isolation")
+        if self.mode == 'trial' and not all([self.trial_ai_acknowledged, self.provider_handling_approved,
+                self.api_key, self.model == 'gpt-4.1-mini-2025-04-14', self.api_base_url == 'https://api.openai.com/v1', self.parser_sandbox_required]):
+            raise ValueError('Experimental trial requires explicit acknowledgement, isolated parsers and the cost-bounded OpenAI model')
         if self.mode == "live" and not all([
             self.provider_handling_approved, self.evaluation_approved,
             self.api_key, self.model, self.api_base_url.startswith("https://"),

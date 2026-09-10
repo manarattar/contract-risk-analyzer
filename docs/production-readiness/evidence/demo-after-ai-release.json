@@ -1,0 +1,12 @@
+{
+  "base": "https://contracts.manarattar.com",
+  "checks": [
+    "ready and anonymous documents denied",
+    "demo isolated from private uploads and live AI",
+    "durable PDF processing, exact source highlight and cross-session denial",
+    "source Q&A, reviewer decision and authenticated export",
+    "deletion revocation and worker purge receipt"
+  ],
+  "synthetic_processing_seconds": 2.95,
+  "passed": true
+}

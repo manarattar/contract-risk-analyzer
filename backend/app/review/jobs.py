@@ -127,7 +127,8 @@ def run_once():
     except Exception as exc:
         allowed = {"no_readable_text", "page_limit", "extracted_text_limit", "invalid_text_encoding",
                    "password_protected", "archive_limit", "archive_expansion_limit", "invalid_docx",
-                   "external_relationship_not_supported", "malformed_document", "ai_budget_or_cancellation"}
+                   "external_relationship_not_supported", "malformed_document", "ai_budget_or_cancellation", "daily_ai_budget_exhausted", "batch_coverage_mismatch", "duplicate_finding_id",
+                   "unsupported_assurance", "invalid_source_span", "ambiguous_source_span", "incomplete_provider_output"}
         code = str(exc) if str(exc) in allowed else "processing_failed"
         checkpoint(job, code, error=code)
         logger.warning("review_job_failed job=%s code=%s", job["id"], code)
@@ -144,7 +145,7 @@ def tombstone(conn, doc):
     conn.execute("DELETE FROM decision_events WHERE document_id=?", (doc["id"],))
     conn.execute("""INSERT OR IGNORE INTO deletions(document_id,workspace,owner,requested,state,backup_policy,provider_policy)
     VALUES(?,?,?,?,'pending',?,?)""", (doc["id"], doc["workspace"], doc["owner"], timestamp,
-                                     settings().backup_retention, settings().provider_retention if doc["mode"] == "live" else "No provider calls for this document."))
+                                     settings().backup_retention, settings().provider_retention if doc["mode"] in {"trial","live"} else "No provider calls for this document."))
 
 
 def sweep():

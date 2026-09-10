@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS deletions(
  requested TEXT NOT NULL, completed TEXT, state TEXT NOT NULL, error_code TEXT,
  backup_policy TEXT NOT NULL, provider_policy TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ai_budget(day TEXT PRIMARY KEY, reserved_cents INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS rate_limits(
  principal TEXT NOT NULL, minute INTEGER NOT NULL, count INTEGER NOT NULL,
  PRIMARY KEY(principal,minute)
