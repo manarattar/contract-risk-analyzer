@@ -117,6 +117,10 @@ def parse(path, kind, max_pages=50, max_chars=150000):
 
 if __name__ == "__main__":
     try:
+        import os
+        if os.environ.get('REVIEW_SANDBOX_REQUIRED') == '1':
+            from app.review.sandbox import restrict
+            restrict(sys.argv[1])
         # Linux worker resource bounds supplement the no-network container.
         if sys.platform != "win32":
             import resource

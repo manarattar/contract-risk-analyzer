@@ -62,6 +62,8 @@ def initialize():
     (root / "uploads").mkdir(exist_ok=True)
     with sqlite3.connect(database_path()) as conn:
         conn.executescript(SCHEMA)
+        from app.review.accounts import AUTH_SCHEMA
+        conn.executescript(AUTH_SCHEMA)
         conn.execute("PRAGMA journal_mode=WAL")
 
 

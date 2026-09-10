@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "base": "https://contracts.manarattar.com",
+  "checks": [
+    "synthetic.pdf upload, processing, ownership, questions and export",
+    "synthetic.txt upload, processing, ownership, questions and export",
+    "two-document comparison",
+    "deletion, purge and logout"
+  ],
+  "live_ai": false
+}

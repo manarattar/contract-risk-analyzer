@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v2")
 
 @router.get('/public-config')
 def public_config():
-    return {'public_demo': settings().public_demo_enabled and settings().mode != 'disabled'}
+    return {'public_demo': settings().public_demo_enabled and settings().mode != 'disabled', 'accounts':settings().accounts_enabled, 'public_signup':settings().public_signup_enabled}
 
 
 @router.post('/demo-session')
@@ -49,6 +49,8 @@ def enqueue(identifier, kind, filename, digest, context, mode, key, user):
             if existing["hash"] != digest or existing["context"] != encoded:
                 raise HTTPException(409, "Idempotency key already used for different content/context.")
             return public_document(existing)
+        if conn.execute("SELECT count(*) FROM documents WHERE tombstone IS NULL").fetchone()[0] >= settings().max_active_documents:
+            raise HTTPException(429, "Trial document capacity reached. Please retry later.")
         count = conn.execute("SELECT count(*) FROM documents WHERE workspace=? AND tombstone IS NULL", (user.workspace_id,)).fetchone()[0]
         if count >= (2 if user.demo else settings().max_documents):
             raise HTTPException(429, "Workspace document quota reached.")
@@ -65,7 +67,7 @@ def enqueue(identifier, kind, filename, digest, context, mode, key, user):
 @router.get("/session")
 def session(user: Principal = Depends(principal)):
     cfg = settings()
-    return {"principal": {"id": user.id, "workspace_id": user.workspace_id, "role": user.role},
+    return {"principal": {"id": user.id, 'display_name':'Demo reviewer' if user.demo else user.display_name or user.id, "workspace_id": user.workspace_id, "role": user.role},
             "mode": 'demo' if user.demo else cfg.mode, "demo": user.demo, "upload_enabled": cfg.upload_enabled and not user.demo, "retention_days": cfg.retention_days,
             "privacy": cfg.privacy_description, "provider": cfg.provider_name,
             "provider_retention": cfg.provider_retention, "backup_retention": cfg.backup_retention,

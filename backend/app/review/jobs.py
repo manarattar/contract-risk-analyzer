@@ -16,10 +16,12 @@ LEASE_SECONDS = 180
 
 def parse_in_process(document):
     cfg = settings()
+    from app.review.sandbox import environment
     result = subprocess.run(
         [sys.executable, "-B", "-m", "app.review.parser", str(object_path(document["id"], document["kind"])),
          document["kind"], str(cfg.max_pages), str(cfg.max_chars)],
         capture_output=True, text=True, encoding="utf-8", timeout=cfg.parser_timeout,
+        env=environment(cfg.parser_sandbox_required),
     )
     output = json.loads(result.stdout)
     if result.returncode or "error" in output:

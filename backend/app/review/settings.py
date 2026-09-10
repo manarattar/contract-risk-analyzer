@@ -15,8 +15,12 @@ class ReviewSettings(BaseSettings):
     principals_json: str = "[]"
     upload_enabled: bool = False
     parser_isolation_approved: bool = False
+    parser_sandbox_required: bool = False
     page_rendering_enabled: bool = False
     public_demo_enabled: bool = False
+    accounts_enabled: bool = False
+    public_signup_enabled: bool = False
+    max_accounts: int = Field(default=1000, ge=1, le=100000)
     demo_signing_key: str = ''
     provider_handling_approved: bool = False
     evaluation_approved: bool = False
@@ -33,6 +37,7 @@ class ReviewSettings(BaseSettings):
     max_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=10 * 1024 * 1024)
     max_pages: int = Field(default=50, ge=1, le=50)
     max_chars: int = Field(default=150000, ge=100, le=150000)
+    max_active_documents: int = Field(default=500, ge=1, le=100000)
     max_documents: int = Field(default=100, ge=1, le=10000)
     max_requests_per_minute: int = Field(default=120, ge=1, le=1000)
     max_ai_calls_per_document: int = Field(default=20, ge=1, le=100)
@@ -40,6 +45,8 @@ class ReviewSettings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_controls(self):
+        if self.public_signup_enabled and not self.accounts_enabled:
+            raise ValueError('Public registration requires accounts')
         if self.public_demo_enabled and len(self.demo_signing_key) < 32:
             raise ValueError('Public demo requires a high-entropy signing key')
         principals = json.loads(self.principals_json)

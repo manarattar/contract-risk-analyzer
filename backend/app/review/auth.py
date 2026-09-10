@@ -19,6 +19,7 @@ class Principal:
     workspace_id: str
     role: str
     demo: bool = False
+    display_name: str | None = None
 
 
 def resolve_principal(token):
@@ -30,7 +31,9 @@ def resolve_principal(token):
             return Principal(item['id'], item['workspace_id'], item['role'])
     from app.review.demo_access import demo_identity
     identity = demo_identity(token)
-    return Principal(identity, identity, 'reviewer', True) if identity else None
+    if identity:return Principal(identity, identity, 'reviewer', True)
+    from app.review.accounts import session_identity
+    return session_identity(token)
 
 
 def principal(credentials: HTTPAuthorizationCredentials = Depends(bearer)):

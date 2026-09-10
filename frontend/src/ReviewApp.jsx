@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { abortRequests, request } from './review-api'
 import OriginalPages from './OriginalPages'
+import PrivateSignIn from './PrivateSignIn'
+import WorkspaceAccess from './WorkspaceAccess'
 import './review.css'
 
 const initialContext = { contract_type: 'Services agreement', party: '', role: 'Unknown', governing_law: 'Unknown', forum: 'Unknown', objectives: [], confirmed: false }
@@ -14,6 +16,8 @@ export default function ReviewApp() {
   const [credential, setCredential] = useState('')
   const [session, setSession] = useState(null)
   const [publicDemo, setPublicDemo] = useState(false)
+  const [accountsAvailable, setAccountsAvailable] = useState(false)
+  const [publicSignup, setPublicSignup] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
@@ -57,7 +61,7 @@ export default function ReviewApp() {
 
   useEffect(() => {
     const controller = new AbortController()
-    request('', '/public-config', { signal: controller.signal }).then((r) => setPublicDemo(r.public_demo)).catch(() => {})
+    request('', '/public-config', { signal: controller.signal }).then((r) => { setPublicDemo(r.public_demo); setAccountsAvailable(r.accounts); setPublicSignup(r.public_signup) }).catch(() => {})
     return () => controller.abort()
   }, [])
 
@@ -159,10 +163,12 @@ export default function ReviewApp() {
     })
   }
 
-  function signOut() {
+  async function signOut() {
+    const previousToken = token
     abortRequests()
     setToken(''); setSession(null); setDoc(null); setItems([]); setBlocks([]); setAnswer(null)
     setComparison(null); setNote(''); setDraft(''); setFile(null); setReceipt(null); go('library')
+    try { await request(previousToken, '/accounts/logout', { method: 'POST' }) } catch { /* Local credentials are already cleared. */ }
   }
 
   async function sample() {
@@ -245,13 +251,15 @@ export default function ReviewApp() {
     <h1>Every observation<br />starts with evidence.</h1>
     <p className="lead">A workspace for reading contracts, checking sources and recording human decisions.</p>
     {publicDemo && <section className="panel"><h2>Explore a synthetic review</h2><p>Try source navigation and review decisions with a fictional agreement. Your demo is isolated, expires after 30 minutes, and cannot accept uploads. No AI provider is called.</p><button className="primary" disabled={busy} onClick={startDemo}>{busy ? 'Opening…' : 'Try the public demo'}</button></section>}
+    {accountsAvailable && <PrivateSignIn publicSignup={publicSignup} onAuthenticated={async value => { const identity = await request(value, '/session'); setToken(value); setSession(identity); go('library') }} />}
+    <details open={!accountsAvailable}><summary>Operator access</summary>
     <form onSubmit={signIn} className="login-form">
       <h2>Open your workspace</h2>
       <label>Workspace access token<input type="password" autoComplete="off" value={credential} onChange={(e) => setCredential(e.target.value)} required minLength={32} /></label>
       <p className="hint">Use your operator-issued token. It stays in memory and is cleared when you sign out or reload.</p>
       {error && <p role="alert" className="notice error">{error}</p>}
       <button className="primary" disabled={busy}>{busy ? 'Opening…' : 'Open workspace'}</button>
-    </form>
+    </form></details>
     <p className="legal">Issue spotting for human review. Not legal advice or approval to sign.</p>
   </main>
 
@@ -263,14 +271,16 @@ export default function ReviewApp() {
         <a href="#library" aria-current={view === 'library' ? 'page' : undefined}>Documents</a>
         <a href="#upload" aria-current={view === 'upload' ? 'page' : undefined}>New review</a>
         <a href="#compare" aria-current={view === 'compare' ? 'page' : undefined}>Compare</a>
+        {accountsAvailable && session.principal.role === 'owner' && <a href="#access" aria-current={view === 'access' ? 'page' : undefined}>Workspace access</a>}
       </nav>
-      <div className="account"><span>{session.principal.id}</span><button onClick={signOut}>Sign out</button></div>
+      <div className="account"><span>{session.principal.display_name || session.principal.id}</span><button onClick={signOut}>Sign out</button></div>
     </header>
     <div className="mode-bar"><span className="status-dot" />{session.mode === 'demo' ? 'Synthetic demo — no live AI analysis' : session.mode === 'manual' ? 'Manual review — no live AI analysis' : session.mode === 'disabled' ? 'Review service disabled' : 'AI observations require human verification'}<span>Not legal advice</span></div>
     <main id="main-content" className="main-content" tabIndex={-1}>
       {error && <div role="alert" className="notice error">{error}</div>}
       {message && <p role="status" className="notice">{message}</p>}
 
+      {view === 'access' && accountsAvailable && session.principal.role === 'owner' && <WorkspaceAccess token={token} />}
       {view === 'library' && <>
         <div className="page-heading"><div><p className="overline">Your workspace</p><h1 ref={titleRef} tabIndex={-1}>Contract reviews</h1><p>Pick up where you left off. Check the source before deciding.</p></div><a className="button primary" href="#upload">New review <span aria-hidden="true">↗</span></a></div>
         <div className="toolbar"><label>Find a review<input type="search" placeholder="Search this page by filename" value={search} onChange={(e) => setSearch(e.target.value)} /></label><button disabled={busy} onClick={() => act(() => loadLibrary())}>Refresh library</button></div>

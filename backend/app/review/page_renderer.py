@@ -53,7 +53,12 @@ if __name__ == "__main__":
             import resource
             resource.setrlimit(resource.RLIMIT_AS, (512 * 1024 * 1024, 512 * 1024 * 1024))
             resource.setrlimit(resource.RLIMIT_CPU, (10, 10))
-        print(json.dumps(render(json.load(sys.stdin))))
+        payload = json.load(sys.stdin)
+        import os
+        if os.environ.get('REVIEW_SANDBOX_REQUIRED') == '1':
+            from app.review.sandbox import restrict
+            restrict(payload['path'])
+        print(json.dumps(render(payload)))
     except Exception:
         print(json.dumps({"error": "page_unavailable"}))
         sys.exit(1)

@@ -7,10 +7,12 @@ import sqlite3
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from app.review.routes import router
 from app.review.auth import resolve_principal
 from app.review import pages  # noqa: F401 — registers authenticated page routes
+from app.review import accounts  # noqa: F401 — registers invite-only account routes
 from app.review.settings import settings
 from app.review.store import transaction
 
@@ -25,7 +27,7 @@ class Admission:
             return await self.app(scope, receive, send)
         headers = dict(scope["headers"])
         path = scope["path"]
-        if path.startswith("/api/v2/") and path not in {'/api/v2/demo-session', '/api/v2/public-config'} and scope["method"] != "OPTIONS":
+        if path.startswith("/api/v2/") and path not in {'/api/v2/demo-session', '/api/v2/public-config', '/api/v2/accounts/login', '/api/v2/accounts/redeem', '/api/v2/accounts/register'} and scope["method"] != "OPTIONS":
             auth = headers.get(b"authorization", b"").decode("latin1")
             token = auth[7:] if auth.lower().startswith("bearer ") else ""
             if resolve_principal(token) is None:
@@ -74,6 +76,11 @@ async def storage_unavailable(_request, _exc):
     return JSONResponse({"detail": "Review storage unavailable. Ask the operator to check readiness."}, status_code=503)
 
 
+@app.exception_handler(RequestValidationError)
+async def invalid_request(_request, _exc):
+    return JSONResponse({'detail':'Request fields are invalid. Check the required fields and their limits.'},status_code=422)
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "mode": settings().mode, "version": "2"}
@@ -84,6 +91,8 @@ def ready():
     try:
         with transaction() as conn:
             version = conn.execute("SELECT version FROM schema_version").fetchone()[0]
+            if settings().accounts_enabled and conn.execute('SELECT version FROM auth_migrations').fetchone()[0] != 1:
+                raise ValueError('account schema')
         if version != 1:
             raise ValueError("schema")
     except (sqlite3.Error, ValueError, TypeError):

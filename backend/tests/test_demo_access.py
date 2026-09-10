@@ -10,7 +10,7 @@ def enable(monkeypatch):
 
 
 def test_demo_disabled_by_default(client):
-    assert client.get('/api/v2/public-config').json() == {'public_demo':False}
+    assert client.get('/api/v2/public-config').json()['public_demo'] is False
     assert client.post('/api/v2/demo-session').status_code == 404
 
 

@@ -1,0 +1,14 @@
+{
+  "passed": [
+    "public self-service registration",
+    "private login",
+    "sign out",
+    "reviewer cannot see owner navigation",
+    "mobile no overflow"
+  ],
+  "viewports": [
+    "1440x1000",
+    "375x900"
+  ],
+  "console_errors": []
+}

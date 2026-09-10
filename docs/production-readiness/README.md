@@ -1,3 +1,5 @@
+> Latest deployed status (2026-09-10): public registration and private sandboxed manual uploads are live. See [public access release](public-access-release.md). Live AI remains pending; earlier audit findings describe the original baseline.
+
 # Contract-review assistant: production-readiness audit
 
 Audit date: 9 September 2026. Original scope: audit and planning only. The user subsequently authorized implementation. The assessment below describes the original baseline, not the replacement v2 implementation. See [implementation status](implementation-status.md) and [operations](operations.md) for current behavior and remaining release gates. Historical file/line references refer to the audited baseline and may have shifted.

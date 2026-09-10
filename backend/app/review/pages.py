@@ -17,10 +17,11 @@ _render_slots = BoundedSemaphore(2)
 
 def render_page(payload):
     try:
+        from app.review.sandbox import environment
         result = subprocess.run([sys.executable, "-B", "-m", "app.review.page_renderer"],
                                 input=json.dumps(payload), capture_output=True, text=True, encoding='utf-8',
                                 cwd=Path(__file__).resolve().parents[2],
-                                timeout=15, check=True)
+                                timeout=15, check=True, env=environment(settings().parser_sandbox_required))
         return json.loads(result.stdout)
     except (subprocess.SubprocessError, OSError, ValueError):
         raise HTTPException(422, "This page could not be rendered. Use the extracted text or ask the operator to check the original.")

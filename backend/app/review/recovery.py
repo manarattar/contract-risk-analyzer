@@ -37,6 +37,9 @@ def prepare(destination):
         excluded = [r[0] for r in target.execute("SELECT id FROM documents WHERE mode='demo' OR tombstone IS NOT NULL OR retention_until<=?",(now(),))]
         scrub(target, excluded)
         target.execute('DELETE FROM rate_limits')
+        tables={r[0] for r in target.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        for table in ('account_sessions','account_invites'):
+            if table in tables:target.execute(f'DELETE FROM {table}')
         rows = target.execute('SELECT id,kind,hash FROM documents').fetchall()
         for row in rows:
             source = object_path(row['id'],row['kind'])
