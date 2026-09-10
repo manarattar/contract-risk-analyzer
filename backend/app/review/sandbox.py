@@ -3,6 +3,7 @@ import ctypes
 import os
 from pathlib import Path
 import platform
+import sys
 
 
 def restrict(input_path):
@@ -23,7 +24,7 @@ def restrict(input_path):
     if descriptor < 0:
         raise RuntimeError('sandbox_ruleset_failed')
     try:
-        allowed = [Path('/usr'), Path('/lib'), Path('/lib64'), Path(__file__).resolve().parents[1], Path(input_path).resolve()]
+        allowed = [Path('/usr'), Path('/lib'), Path('/lib64'), Path(sys.base_prefix), Path(sys.prefix), Path(__file__).resolve().parents[1], Path(input_path).resolve()]
         for path in allowed:
             if not path.exists(): continue
             fd = os.open(path, os.O_PATH | os.O_CLOEXEC)
