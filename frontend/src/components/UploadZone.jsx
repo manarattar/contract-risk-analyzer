@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import Icon from "./Icon";
@@ -59,3 +60,5 @@ export default function UploadZone({ onUpload, loading }) {
     </div>
   );
 }
+
+UploadZone.propTypes = { onUpload: PropTypes.func, loading: PropTypes.bool };

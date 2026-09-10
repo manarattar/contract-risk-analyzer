@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 const CATEGORY_STYLES = {
   "Best Practice":        { badge: "bg-green-100 text-green-700 border-green-300",  bar: "bg-green-500" },
   "Acceptable Standard":  { badge: "bg-blue-100 text-blue-700 border-blue-300",     bar: "bg-blue-500" },
@@ -105,3 +106,7 @@ export default function ClauseDetail({ clause, onClose }) {
     </div>
   );
 }
+
+Section.propTypes = { label: PropTypes.string, children: PropTypes.node };
+
+ClauseDetail.propTypes = { clause: PropTypes.object, onClose: PropTypes.func };

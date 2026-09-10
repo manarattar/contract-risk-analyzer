@@ -1,0 +1,17 @@
+{
+  "passed": [
+    "public synthetic PDF demo",
+    "two pages",
+    "exact quote highlight",
+    "source focus",
+    "arrow keyboard navigation",
+    "return focus",
+    "text alternative",
+    "mobile no overflow"
+  ],
+  "viewports": [
+    "1440x1000",
+    "375x900"
+  ],
+  "console_errors": []
+}

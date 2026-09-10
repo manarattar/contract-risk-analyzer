@@ -1,0 +1,33 @@
+{
+  "browser": "Microsoft Edge headless via CDP",
+  "desktop": [
+    1440,
+    1000
+  ],
+  "mobile": [
+    375,
+    900
+  ],
+  "passed": [
+    "login",
+    "empty library",
+    "synthetic sample",
+    "durable processing",
+    "finding selection",
+    "source focus and quote highlight",
+    "save decision",
+    "source Q&A",
+    "human annotation",
+    "mobile overflow",
+    "delete dialog initial focus",
+    "Escape and focus return",
+    "deletion and purge receipt"
+  ],
+  "console_exceptions": [],
+  "limitations": [
+    "No screen-reader session",
+    "No field performance measurement",
+    "No live provider or real documents",
+    "Export download evaluated by backend test, not saved by this browser script"
+  ]
+}

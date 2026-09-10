@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * Inline SVG icon set, used instead of emoji so the UI renders identically
  * across platforms and reads as a product rather than a chat message.
@@ -107,3 +108,5 @@ export default function Icon({ name, size = 20, className = "", ...rest }) {
     </svg>
   );
 }
+
+Icon.propTypes = { name: PropTypes.string, size: PropTypes.number, className: PropTypes.string };

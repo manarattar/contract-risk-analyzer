@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import ContradictionPanel from "./ContradictionPanel";
 
 const RISK_COLORS = {
@@ -191,3 +192,9 @@ export default function RiskDashboard({ analysis }) {
     </div>
   );
 }
+
+ScoreGauge.propTypes = { score: PropTypes.number, level: PropTypes.string };
+
+QualityRow.propTypes = { label: PropTypes.string, value: PropTypes.string };
+
+RiskDashboard.propTypes = { analysis: PropTypes.object };

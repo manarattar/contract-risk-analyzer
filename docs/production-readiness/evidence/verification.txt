@@ -1,0 +1,26 @@
+Final local verification — 2026-09-09
+
+Backend: work/readiness-venv/Scripts/python.exe -m pytest -q backend
+Result: 61 passed, 13 deselected, 1 upstream Starlette/AnyIO deprecation warning; 289.38 seconds.
+Provider integration tests excluded. Synthetic fixtures only.
+
+Browser: backend/venv/Scripts/python.exe work/browser_check.py
+Result: passed; see browser-check.json and screenshots. Initial walkthrough used previous local runtime; dependency-refresh rerun recorded separately if performed.
+
+Preservation: .gitignore SHA256 701534a41e4c0c8a23ee4b809968ba6f56930382f477b12400999d26aea4cdb1.
+No deployment, paid AI requests, real contracts, or legacy database migration.
+
+2026-09-10 follow-up:
+Evaluation gate regression: 7 passed, 37 deselected; same upstream deprecation warning. Six invalid-metric cases added after initial full suite.
+Updated-runtime Edge/CDP walkthrough: passed (Node 22.23.2 / Vite 8.2.2, refreshed Python runtime).
+Frontend npm run lint: passed. npm run build: passed, Vite 8.2.2, JS 173.70 kB (54.40 gzip), CSS 13.02 kB (3.50 gzip). Bundle sizes are not field performance measurements.
+Frontend npm audit after compatible fixes: zero reported vulnerabilities, including dev dependencies.
+
+Backend runtime lock: 26 exact pins; test lock: 37 exact pins. Published PyPI artifact hashes attached. Hash-required installation in isolated test environment passed (packages already satisfied).
+Runtime pip-audit of backend/requirements.txt: no known vulnerabilities found. This excludes container/base OS and provider infrastructure.
+Initial tool-environment scan found vulnerable pip/setuptools; upgraded isolated tools to pip 26.2.1 and setuptools 84.0.0. Old environment untouched.
+git diff --check: passed.
+
+Final hash installation dry-run with --ignore-installed --require-hashes: exit 0 (see hash-install-check.txt).
+Refreshed isolated tool-environment pip-audit: no known vulnerabilities found.
+Temporary local API/worker/browser/dev-server processes stopped after verification.

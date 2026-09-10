@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState, useRef, useEffect } from "react";
 import { askQuestion } from "../api";
 
@@ -89,3 +90,5 @@ export default function ChatBox({ documentId }) {
     </div>
   );
 }
+
+ChatBox.propTypes = { documentId: PropTypes.string };

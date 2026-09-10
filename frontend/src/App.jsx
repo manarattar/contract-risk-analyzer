@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState, useCallback } from "react";
 import { uploadContract, getStatus, getAnalysis, compareContracts, getCompareStatus, getCompareResult } from "./api";
 import UploadZone from "./components/UploadZone";
@@ -195,7 +196,7 @@ export default function App() {
 
             {mode === "single" && (
               <div className="flex flex-col items-center gap-3">
-                <p className="text-xs text-gray-400">Don't have a contract handy?</p>
+                <p className="text-xs text-gray-400">Don&apos;t have a contract handy?</p>
                 <button
                   onClick={async () => {
                     const res = await fetch("/sample_contract.pdf");
@@ -327,3 +328,5 @@ function FeedbackBar({ context }) {
     </div>
   );
 }
+
+FeedbackBar.propTypes = { context: PropTypes.object };

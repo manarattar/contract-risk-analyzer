@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { getReportUrl } from "../api";
 import Icon from "./Icon";
 
@@ -17,3 +18,5 @@ export default function ReportButton({ documentId }) {
     </a>
   );
 }
+
+ReportButton.propTypes = { documentId: PropTypes.string };

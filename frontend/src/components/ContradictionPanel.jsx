@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import Icon from "./Icon";
 
 const SEVERITY_COLORS = {
@@ -56,3 +57,5 @@ export default function ContradictionPanel({ contradictions }) {
     </div>
   );
 }
+
+ContradictionPanel.propTypes = { contradictions: PropTypes.array };

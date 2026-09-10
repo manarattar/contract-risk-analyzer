@@ -1,5 +1,9 @@
 # Deploying AI Contract Risk Analyzer
 
+**Current v2 deployment:** see `docs/production-readiness/deployment/README.md`. The v2 public synthetic demo is now live; the remainder of this file documents the preserved legacy deployment.
+
+> Historical legacy deployment notes. The replacement v2 service has not been deployed or validated at the address below. Use `README.md` and `docs/production-readiness/operations.md` for the current gated local setup; do not apply these legacy deployment steps to v2.
+
 **Live at `contracts.manarattar.com`.**
 
 ## How it is put together

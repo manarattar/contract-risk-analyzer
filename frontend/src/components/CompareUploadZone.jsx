@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -92,3 +93,7 @@ export default function CompareUploadZone({ onCompare, loading }) {
     </div>
   );
 }
+
+FileDropzone.propTypes = { label: PropTypes.string, file: PropTypes.object, onFile: PropTypes.func, letter: PropTypes.string, color: PropTypes.string };
+
+CompareUploadZone.propTypes = { onCompare: PropTypes.func, loading: PropTypes.bool };

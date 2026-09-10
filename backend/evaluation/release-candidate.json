@@ -1,0 +1,13 @@
+{
+  "dataset_version": "scaffold-1",
+  "reviewer_adjudicated": false,
+  "qualified_reviewers": [],
+  "held_out_families": 0,
+  "dataset_hash": null,
+  "prompt_hash": null,
+  "model_version": null,
+  "parser_version": "source-blocks-1",
+  "critical_failures": null,
+  "metrics": {},
+  "notes": "Intentionally ineligible. Offline synthetic regression tests do not establish legal quality or replace the planned adjudicated corpus."
+}

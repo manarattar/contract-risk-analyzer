@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from "react";
 
 const RISK_SCORE_COLOR = (score) => {
@@ -208,3 +209,9 @@ export default function CompareView({ result }) {
     </div>
   );
 }
+
+ScoreRing.propTypes = { score: PropTypes.number, riskLevel: PropTypes.string, label: PropTypes.string, colorClass: PropTypes.string };
+
+ClauseRow.propTypes = { comp: PropTypes.object, isExpanded: PropTypes.bool, onToggle: PropTypes.func };
+
+CompareView.propTypes = { result: PropTypes.object };

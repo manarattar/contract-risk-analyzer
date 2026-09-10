@@ -1,0 +1,10 @@
+ARG RELEASE_IMAGE
+FROM ${RELEASE_IMAGE}
+USER root
+COPY requirements-test.txt /app/requirements-test.txt
+RUN python -m pip install --no-cache-dir --require-hashes -r /app/requirements-test.txt
+COPY tests /app/tests
+COPY pytest.ini /app/pytest.ini
+USER reviewer
+ENV PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 REVIEW_MODE=disabled REVIEW_PRINCIPALS_JSON=[]
+CMD ["python", "-m", "pytest", "-p", "no:cacheprovider", "-q", "tests"]

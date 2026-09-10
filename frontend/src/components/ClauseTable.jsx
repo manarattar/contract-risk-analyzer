@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState } from "react";
 import ClauseDetail from "./ClauseDetail";
 
@@ -19,7 +20,7 @@ const SCORE_BAR = {
   "Critical Risk":        "bg-red-700",
 };
 
-const SORT_FIELDS = ["clause_title", "clause_type", "category", "risk_score"];
+
 
 function ScoreBar({ score, category }) {
   const bar = SCORE_BAR[category] || "bg-gray-400";
@@ -112,3 +113,7 @@ export default function ClauseTable({ clauses }) {
     </>
   );
 }
+
+ScoreBar.propTypes = { score: PropTypes.number, category: PropTypes.string };
+
+ClauseTable.propTypes = { clauses: PropTypes.array };
