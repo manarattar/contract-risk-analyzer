@@ -55,6 +55,8 @@ class Finding(StrictModel):
     impact: Literal["High", "Medium", "Low", "Not assessed"] = "Not assessed"
     uncertainty: str = Field(min_length=1, max_length=1000)
     action: str = Field(min_length=1, max_length=2000)
+    suggested_revision: str = Field(default="", max_length=4000)
+    revision_caveats: str = Field(default="", max_length=1000)
     citations: list[Citation] = Field(min_length=1, max_length=4)
     business_preference: Literal["Unknown"] = "Unknown"
 

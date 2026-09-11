@@ -35,5 +35,7 @@ def findings(source):
              "explanation": "A cap based on thirty days of fees may be smaller than the loss you want covered. This is an illustrative observation, not a legal assessment.",
              "impact": "Not assessed", "uncertainty": "Actual fees, exceptions, objectives and governing law need human confirmation.",
              "action": "Ask your legal reviewer to check the cap, related provisions and intended exposure.",
+             "suggested_revision": "The Provider's total aggregate liability shall not exceed [agreed cap], subject to [agreed exceptions].",
+             "revision_caveats": "Synthetic illustration only. Agree the cap and exceptions with a qualified reviewer and check related clauses before using any wording.",
              "business_preference": "Unknown", "evidence_status": "Synthetic fixture — not AI analysis",
              "citations": [{"block_id": block["id"], "quote": quote, "start": start, "end": start + len(quote), "location": block["location"]}]}]
