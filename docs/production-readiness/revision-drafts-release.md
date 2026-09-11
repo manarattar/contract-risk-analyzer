@@ -11,3 +11,6 @@ Verification before release: 93 offline Linux tests passed, 13 live integration 
 Evidence: `evidence/revision-draft-browser.json`, desktop/mobile screenshots, `evidence/revision-ai-stage.json`. Tests: `backend/tests/test_revision_drafts.py` covers caveats, prohibited assurances, source preservation and export escaping.
 
 The public trial's privacy, retention, budget, source-verification and human-review limitations continue to apply. No database migration or confidential contract was used for this change.
+
+
+Deployed and verified: `review-20260911-141637`, code commit `3c54bb5e52168026b45547393190650ca980164a`. Hosted CI passed: https://github.com/manarattar/contract-risk-analyzer/actions/runs/34609320870. Live browser checks and PDF/TXT AI upload, questions, comparison, export, deletion and purge passed; see `evidence/revision-draft-live-browser.json` and `evidence/revision-public-ai-live.json`. Worker health was good with zero pending purges at verification.

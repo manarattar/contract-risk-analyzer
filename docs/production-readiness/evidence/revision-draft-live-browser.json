@@ -1,0 +1,10 @@
+{
+  "passed": [
+    "suggested draft and caveats visible",
+    "copy moves focus to editor",
+    "existing draft protected",
+    "reviewer decision saved",
+    "mobile no overflow"
+  ],
+  "console_errors": []
+}
