@@ -1,41 +1,23 @@
-# v2 uses a NEW volume. Existing legacy data/chroma are neither mounted nor changed.
-x-review: &review
-  build: ./backend
-  env_file: .env
-  environment:
-    REVIEW_DATA_DIR: /app/data/review-v2
-  volumes:
-    - review_v2:/app/data/review-v2
-  read_only: true
-  tmpfs:
-    - /tmp:size=128m,mode=1777
-  security_opt:
-    - no-new-privileges:true
-  cap_drop: [ALL]
-  mem_limit: 768m
-  cpus: 1.0
-
 services:
   backend:
-    <<: *review
+    build: ./backend
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./chroma:/app/chroma
     restart: unless-stopped
-  worker:
-    <<: *review
-    command: ["python", "-m", "app.review.jobs"]
-    network_mode: none
-    restart: unless-stopped
-  initialize:
-    <<: *review
-    profiles: [setup]
-    command: ["python", "-m", "app.review.store"]
-    network_mode: none
+
   frontend:
     build: ./frontend
     ports:
-      - "127.0.0.1:8080:80"
-    depends_on: [backend]
+      - "80:80"
+    depends_on:
+      - backend
     restart: unless-stopped
+
 volumes:
-  review_v2:
+  data:
+  chroma:
