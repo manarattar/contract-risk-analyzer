@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -43,6 +43,11 @@ class ClauseAnalysis(BaseModel):
     suggested_revision: str
     negotiation_advice: str
     enforceability_concern: bool = False
+    # Who made the classification ("jev" or "llm") and, for Jev, how sure it was
+    decided_by: str = "llm"
+    decision_confidence: Optional[float] = None
+    category_probabilities: Optional[Dict[str, float]] = None
+    needs_review: bool = False
 
 
 class MissingClause(BaseModel):

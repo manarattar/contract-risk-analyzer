@@ -97,6 +97,11 @@ export default function ClauseTable({ clauses }) {
                     <td className="px-4 py-3 text-gray-500 text-xs">{clause.clause_type}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge}`}>{cat}</span>
+                      {clause.needs_review && (
+                        <span className="block mt-1 text-amber-600 text-xs" title="Jev is split between categories">
+                          ● check: low confidence
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <ScoreBar score={clause.risk_score} category={cat} />

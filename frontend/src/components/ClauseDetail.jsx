@@ -14,6 +14,45 @@ const PARTY_LABEL = {
   "Both Parties": "bg-gray-100 text-gray-600",
 };
 
+const CATEGORY_ORDER = [
+  "Best Practice", "Acceptable Standard", "Minor Improvement",
+  "Moderate Risk", "High Risk", "Critical Risk",
+];
+
+function JevDecision({ clause }) {
+  const probs = clause.category_probabilities || {};
+  return (
+    <div className="mx-6 mt-3 rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2.5">
+      <div className="mb-2 flex items-center justify-between text-xs">
+        <span className="font-semibold text-indigo-700">Category decided by Jev</span>
+        <span className="text-indigo-500">
+          confidence {Math.round((clause.decision_confidence ?? 0) * 100)}%
+        </span>
+      </div>
+      <div className="space-y-1">
+        {CATEGORY_ORDER.filter(c => c in probs).map(c => (
+          <div key={c} className="flex items-center gap-2 text-[11px]">
+            <span className="w-32 shrink-0 text-gray-500">{c}</span>
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white">
+              <div className="h-full rounded-full bg-indigo-500" style={{ width: `${probs[c] * 100}%` }} />
+            </div>
+            <span className="w-9 text-right font-mono text-gray-500">{Math.round(probs[c] * 100)}%</span>
+          </div>
+        ))}
+      </div>
+      {clause.needs_review && (
+        <p className="mt-2 text-[11px] font-medium text-amber-700">
+          Low confidence — Jev is split between categories, so a person should check this clause.
+        </p>
+      )}
+      <p className="mt-2 text-[11px] text-gray-400">
+        The risk score is the probability-weighted average of the category bands, not a number the AI picked.
+        The explanation below is written by an LLM that was told this decision.
+      </p>
+    </div>
+  );
+}
+
 function Section({ label, children }) {
   return (
     <div>
@@ -73,6 +112,8 @@ export default function ClauseDetail({ clause, onClose }) {
           )}
         </div>
 
+        {clause.decided_by === "jev" && <JevDecision clause={clause} />}
+
         {/* Enforceability warning */}
         {clause.enforceability_concern && (
           <div className="mx-6 mt-3 px-3 py-2 rounded-lg bg-purple-50 border border-purple-200 text-xs text-purple-700 font-medium">
@@ -106,6 +147,8 @@ export default function ClauseDetail({ clause, onClose }) {
     </div>
   );
 }
+
+JevDecision.propTypes = { clause: PropTypes.object };
 
 Section.propTypes = { label: PropTypes.string, children: PropTypes.node };
 

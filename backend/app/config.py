@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_base_url: str = "https://api.openai.com/v1"
     model_name: str = "gpt-4o-mini"
+    # Jev (TypeSafe) decides each clause's category when a key is set; the LLM
+    # then only writes the explanations. Empty key = the LLM decides, as before.
+    typesafe_api_key: str = ""
+    jev_model: str = "jev-latest"
     mock_mode: bool = False
     cors_origins: str = "*"  # comma-separated URLs, or "*" for all
 

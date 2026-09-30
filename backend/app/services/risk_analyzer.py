@@ -7,6 +7,7 @@ import openai
 from openai import OpenAI
 
 from app.config import get_settings
+from app.services.jev_judge import jev_available, judge_clauses
 from app.schemas import (
     ClauseAnalysis, ClauseCategory, AffectedParty,
     ContractAnalysis, ContractQualitySummary,
@@ -71,6 +72,21 @@ DETECT_PROMPT = """Analyze this contract excerpt and return ONLY valid JSON.
   "jurisdiction_hint": "any jurisdiction or governing law clues, or Unknown",
   "red_flags_preview": ["up to 3 immediately obvious issues — leave empty if none"]
 }}"""
+
+
+BATCH_TEXT_PROMPT = """Write the analysis text for these {n} contract clauses.
+
+Contract context: {contract_type} | Apparently weaker party: {weaker_party}
+
+Each clause has already been classified. Do NOT change or contradict the decided category —
+write text that is consistent with it.
+
+━━━ CLAUSES ━━━
+{clauses_text}
+
+Return ONLY a valid JSON array of exactly {n} objects (one per clause, in order). No markdown, no explanation.
+Each object must have:
+{{"clause_title":"short descriptive title (max 8 words)","what_works_well":"1 sentence, or 'None' if Critical Risk","risk_explanation":"the actual issue if Moderate Risk or higher; otherwise 'None' or a brief minor note","suggested_revision":"1-2 sentences, or 'None required' if Best Practice or Acceptable Standard","negotiation_advice":"1 sentence, or 'None required' if Best Practice"}}"""
 
 
 BATCH_CLAUSE_PROMPT = """Analyze these {n} contract clauses against standard commercial contracting practice.
@@ -400,6 +416,11 @@ def _analyze_clauses_batch(
     weaker_party: str,
 ) -> list[ClauseAnalysis]:
     """Analyze a batch of up to BATCH_SIZE clauses in a single LLM call."""
+    if jev_available():
+        try:
+            return _analyze_clauses_batch_with_jev(clauses, contract_type, weaker_party)
+        except Exception:
+            pass  # Jev unreachable: fall back to the LLM deciding, as before
     n = len(clauses)
     clauses_text = "\n\n".join(
         f"--- Clause {i+1} ---\n{c['text']}" for i, c in enumerate(clauses)
@@ -439,6 +460,67 @@ def _analyze_clauses_batch(
                 time.sleep(1)
             else:
                 raise
+
+
+def _analyze_clauses_batch_with_jev(
+    clauses: list,
+    contract_type: str,
+    weaker_party: str,
+) -> list[ClauseAnalysis]:
+    """
+    Jev decides each clause (category, type, affected party, enforceability);
+    the LLM is then told those decisions and only writes the explanations.
+    """
+    decisions = judge_clauses(clauses, contract_type, weaker_party)
+
+    clauses_text = "\n\n".join(
+        f"--- Clause {i+1} (decided: {d['category']}, {d['clause_type']}, "
+        f"affects {d['affected_party']}"
+        f"{', possible enforceability concern' if d['enforceability_concern'] else ''}) ---\n"
+        f"{c['text']}"
+        for i, (c, d) in enumerate(zip(clauses, decisions))
+    )
+    prompt = BATCH_TEXT_PROMPT.format(
+        n=len(clauses),
+        contract_type=contract_type,
+        weaker_party=weaker_party,
+        clauses_text=clauses_text,
+    )
+    settings = get_settings()
+    client = _get_client()
+    texts: list = []
+    for attempt in range(2):
+        try:
+            items = _extract_json(_call_llm(client, settings, prompt))
+            texts = items if isinstance(items, list) else [items]
+            break
+        except Exception:
+            if attempt == 0:
+                prompt += "\n\nReturn ONLY the JSON array. No other text."
+                time.sleep(1)
+
+    results = []
+    for i, (clause, d) in enumerate(zip(clauses, decisions)):
+        text = texts[i] if i < len(texts) and isinstance(texts[i], dict) else {}
+        results.append(ClauseAnalysis(
+            clause_title=text.get("clause_title") or f"Clause {clause['index'] + 1}",
+            clause_type=d["clause_type"],
+            original_text=clause["text"],
+            category=d["category"],
+            risk_level=_category_to_risk_level(d["category"]),
+            risk_score=_clamp_score_to_category(d["risk_score"], d["category"]),
+            affected_party=d["affected_party"],
+            what_works_well=text.get("what_works_well", ""),
+            risk_explanation=text.get("risk_explanation", "Explanation unavailable."),
+            suggested_revision=text.get("suggested_revision", "Manual review recommended."),
+            negotiation_advice=text.get("negotiation_advice", "None required"),
+            enforceability_concern=d["enforceability_concern"],
+            decided_by="jev",
+            decision_confidence=d["decision_confidence"],
+            category_probabilities=d["category_probabilities"],
+            needs_review=d["needs_review"],
+        ))
+    return results
 
 
 # ---------------------------------------------------------------------------
