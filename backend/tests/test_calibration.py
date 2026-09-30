@@ -13,7 +13,7 @@ from app.services.mock_analyzer import get_mock_analysis
 from app.services.risk_analyzer import (
     _extract_json, _clamp_score_to_category, _category_to_risk_level,
     _apply_contradiction_score_boost, _boost_contradiction_clauses,
-    _derive_risk_level_from_score,
+    _derive_risk_level_from_score, _overall_score_from_clauses, _missing_clause_adjustment,
 )
 from app.schemas import ContradictionFinding
 
@@ -67,6 +67,47 @@ class TestScoreCalibration:
         assert _derive_risk_level_from_score(50) == RiskLevel.MEDIUM
         assert _derive_risk_level_from_score(70) == RiskLevel.MEDIUM
         assert _derive_risk_level_from_score(75) == RiskLevel.HIGH
+
+
+class TestOverallScoreFormula:
+    def _clause(self, category, score):
+        return ClauseAnalysis(
+            clause_title="c", clause_type="Other", original_text="...",
+            category=category, risk_level=RiskLevel.LOW, risk_score=score,
+            risk_explanation="x", suggested_revision="x", negotiation_advice="x",
+        )
+
+    def test_well_drafted_contract_scores_low(self):
+        clauses = [self._clause(ClauseCategory.ACCEPTABLE_STANDARD, s) for s in (15, 20, 25, 18, 22)]
+        assert _overall_score_from_clauses(clauses) <= 35
+
+    def test_one_critical_clause_dominates(self):
+        clauses = [self._clause(ClauseCategory.ACCEPTABLE_STANDARD, 20)] * 8
+        clauses.append(self._clause(ClauseCategory.CRITICAL_RISK, 90))
+        # one critical defect lands in 'needs revision' (56+), not 'reasonable'
+        assert _overall_score_from_clauses(clauses) >= 56
+
+    def test_several_high_and_critical_clauses_score_severe(self):
+        clauses = [
+            self._clause(ClauseCategory.CRITICAL_RISK, 89),
+            self._clause(ClauseCategory.CRITICAL_RISK, 81),
+            self._clause(ClauseCategory.HIGH_RISK, 73),
+            self._clause(ClauseCategory.HIGH_RISK, 65),
+        ] + [self._clause(ClauseCategory.MODERATE_RISK, 50)] * 6
+        assert _overall_score_from_clauses(clauses) >= 85
+
+    def test_escalation_is_capped(self):
+        clauses = [self._clause(ClauseCategory.CRITICAL_RISK, 90)] * 10
+        assert _overall_score_from_clauses(clauses) == 100
+
+    def test_missing_clause_penalty(self):
+        from app.schemas import MissingClause
+        essential = MissingClause(clause_type="Data Protection",
+                                  relevance=MissingClauseRelevance.ESSENTIAL, reason="x")
+        optional = MissingClause(clause_type="Non-compete",
+                                 relevance=MissingClauseRelevance.OPTIONAL, reason="x")
+        assert _missing_clause_adjustment([essential, optional]) == 5
+        assert _missing_clause_adjustment([essential] * 5) == 15
 
 
 class TestContradictionBoost:

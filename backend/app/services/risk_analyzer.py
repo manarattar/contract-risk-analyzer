@@ -197,6 +197,10 @@ Clauses analyzed:
 Missing clause types (from standard list): {missing_types}
 Clause types found: {found_types}
 
+Overall risk score, computed by formula from the clause scores: {clause_score}/100
+(missing-clause and contradiction adjustments are added afterwards). Write document_summary,
+quality_summary and final_recommendation so they are consistent with this score.
+
 ━━━ SCORING CALIBRATION ━━━
 • 0–20: Excellent — all or nearly all clauses Best Practice
 • 21–35: Well-drafted — mostly Best Practice / Acceptable Standard, only minor improvements
@@ -577,6 +581,40 @@ def _apply_contradiction_score_boost(score: int, contradictions: List[Contradict
     return min(97, score + boost)
 
 
+def _overall_score_from_clauses(clauses: List[ClauseAnalysis]) -> int:
+    """
+    The contract's risk score by formula, not by asking the LLM for a number.
+    The worst clauses dominate (one total liability waiver makes a contract
+    dangerous however tidy the rest is), the average keeps a single outlier
+    from deciding everything, each High/Critical clause adds on top, and the
+    result never drops below 70% of the worst clause.
+    """
+    if not clauses:
+        return 50
+    scores = sorted((c.risk_score for c in clauses), reverse=True)
+    worst = scores[:3]
+    base = 0.6 * sum(worst) / len(worst) + 0.4 * sum(scores) / len(scores)
+    escalation = sum(
+        6 if c.category == ClauseCategory.CRITICAL_RISK
+        else 4 if c.category == ClauseCategory.HIGH_RISK
+        else 0
+        for c in clauses
+    )
+    # a single severe clause can't be averaged away by many tidy ones
+    floor = 0.7 * scores[0]
+    return round(min(100, max(base + min(20, escalation), floor)))
+
+
+def _missing_clause_adjustment(missing_clauses: List[MissingClause]) -> int:
+    penalty = sum(
+        5 if m.relevance == MissingClauseRelevance.ESSENTIAL
+        else 2 if m.relevance == MissingClauseRelevance.RECOMMENDED
+        else 0
+        for m in missing_clauses
+    )
+    return min(15, penalty)
+
+
 def _derive_risk_level_from_score(score: int) -> RiskLevel:
     if score <= 35:
         return RiskLevel.LOW
@@ -630,15 +668,16 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
         for c in analyzed_clauses
     )
     missing_types = [t for t in IMPORTANT_CLAUSE_TYPES if t not in found_types]
+    clause_score = _overall_score_from_clauses(analyzed_clauses)
 
     summary_raw = _call_llm(client, settings, SUMMARY_PROMPT.format(
         contract_type=contract_type,
         clause_summary=clause_summary,
+        clause_score=clause_score,
         missing_types=", ".join(missing_types) if missing_types else "None",
         found_types=", ".join(found_types) if found_types else "None",
     ))
     summary_data = _extract_json(summary_raw)
-    summary_data["overall_risk_score"] = max(0, min(100, int(summary_data.get("overall_risk_score", 50))))
 
     # Parse quality_summary
     raw_quality = summary_data.get("quality_summary", {})
@@ -659,6 +698,11 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
                 ))
         except Exception:
             continue
+
+    # The LLM's own overall_risk_score is ignored: the score comes from the clauses
+    summary_data["overall_risk_score"] = min(
+        100, clause_score + _missing_clause_adjustment(missing_clauses)
+    )
 
     # Stage 4: contradiction validation
     contradictions: List[ContradictionFinding] = []
