@@ -11,6 +11,7 @@ import ReportButton from "./components/ReportButton";
 import Disclaimer from "./components/Disclaimer";
 import Onboarding, { hasSeenTour } from "./components/Onboarding";
 import Icon from "./components/Icon";
+import ThemeToggle from "./components/ThemeToggle.jsx";
 
 const STAGES = { idle: "idle", uploading: "uploading", analyzing: "analyzing", results: "results", error: "error" };
 
@@ -299,7 +300,8 @@ export default function App() {
               <span className="block text-[12px] text-ink-3">Marked up clause by clause. Not legal advice.</span>
             </span>
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <ThemeToggle />
             {canTour && (
               <button
                 onClick={() => { if (onLanding) setMode("single"); setTour(onLanding ? "landing" : "results"); }}
