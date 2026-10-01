@@ -1,10 +1,9 @@
 export default function Disclaimer() {
   return (
-    <div className="bg-yellow-50 border border-yellow-300 rounded-lg px-4 py-3 text-yellow-800 text-sm">
-      <span className="font-semibold">⚠ Disclaimer: </span>
-      This tool provides AI-generated contract risk analysis for informational purposes only and
-      does not constitute legal advice. Always consult a qualified legal professional before making
-      decisions based on this analysis.
-    </div>
+    <p className="max-w-[72ch] border-l-2 border-mark pl-3 text-[13px] leading-relaxed text-ink-2">
+      <span className="font-semibold text-ink">Not legal advice. </span>
+      This is an automated risk review for information only. Talk to a qualified lawyer before you act on it
+      or sign anything.
+    </p>
   );
 }

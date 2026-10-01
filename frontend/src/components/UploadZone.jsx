@@ -26,37 +26,25 @@ export default function UploadZone({ onUpload, loading }) {
   });
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div data-tour="upload" className="w-full">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200
-          ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50"}
-          ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`cursor-pointer rounded-[4px] border border-dashed px-6 py-10 text-center transition-colors
+          ${isDragActive ? "border-ink bg-desk" : "border-ink-3 hover:border-ink hover:bg-desk"}
+          ${loading ? "cursor-not-allowed opacity-50" : ""}`}
       >
         <input {...getInputProps()} />
-        <Icon name="file" size={48} className="mx-auto mb-4 text-gray-300" />
+        <Icon name="file" size={36} className="mx-auto mb-3 text-ink-3" />
         {isDragActive ? (
-          <p className="text-blue-600 font-medium text-lg">Drop your contract here...</p>
+          <p className="text-[16px] font-medium text-ink">Drop the contract here</p>
         ) : (
           <>
-            <p className="text-gray-700 font-medium text-lg mb-1">
-              Drag & drop your contract here
-            </p>
-            <p className="text-gray-400 text-sm mb-4">or click to browse files</p>
-            <div className="flex gap-2 justify-center">
-              {["PDF", "DOCX", "TXT"].map((t) => (
-                <span key={t} className="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs text-gray-500 font-medium">
-                  {t}
-                </span>
-              ))}
-            </div>
-            <p className="text-gray-400 text-xs mt-2">Max 10 MB</p>
+            <p className="text-[16px] font-medium text-ink">Drop a contract here, or click to choose one</p>
+            <p className="num mt-1.5 text-[12px] text-ink-3">PDF · DOCX · TXT — up to 10 MB</p>
           </>
         )}
       </div>
-      {error && (
-        <p className="mt-2 text-red-600 text-sm text-center">{error}</p>
-      )}
+      {error && <p className="mt-2 text-center text-[13px] text-mark">{error}</p>}
     </div>
   );
 }

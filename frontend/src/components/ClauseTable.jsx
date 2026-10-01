@@ -1,35 +1,23 @@
 import PropTypes from 'prop-types';
 import { useState } from "react";
 import ClauseDetail from "./ClauseDetail";
+import { categoryStyle } from "../theme";
 
-const CATEGORY_BADGE = {
-  "Best Practice":        "bg-green-100 text-green-700 border border-green-200",
-  "Acceptable Standard":  "bg-blue-100 text-blue-700 border border-blue-200",
-  "Minor Improvement":    "bg-yellow-100 text-yellow-700 border border-yellow-200",
-  "Moderate Risk":        "bg-orange-100 text-orange-700 border border-orange-200",
-  "High Risk":            "bg-red-100 text-red-700 border border-red-200",
-  "Critical Risk":        "bg-red-200 text-red-900 border border-red-300",
-};
-
-const SCORE_BAR = {
-  "Best Practice":        "bg-green-500",
-  "Acceptable Standard":  "bg-blue-400",
-  "Minor Improvement":    "bg-yellow-400",
-  "Moderate Risk":        "bg-orange-500",
-  "High Risk":            "bg-red-500",
-  "Critical Risk":        "bg-red-700",
-};
-
-
+const COLUMNS = [
+  { label: "Clause",   field: "clause_title" },
+  { label: "Type",     field: "clause_type" },
+  { label: "Marked as", field: "category" },
+  { label: "Score",    field: "risk_score" },
+];
 
 function ScoreBar({ score, category }) {
-  const bar = SCORE_BAR[category] || "bg-gray-400";
+  const s = categoryStyle(category);
   return (
-    <div className="flex items-center gap-2 min-w-[80px]">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${bar}`} style={{ width: `${score}%` }} />
+    <div className="flex min-w-[88px] items-center gap-2">
+      <div className="h-1 flex-1 bg-rule">
+        <div className={`h-full ${s.bar}`} style={{ width: `${score}%` }} />
       </div>
-      <span className="text-xs text-gray-500 w-6 text-right">{score}</span>
+      <span className="num w-7 text-right text-[12px] text-ink-2">{score}</span>
     </div>
   );
 }
@@ -38,7 +26,9 @@ export default function ClauseTable({ clauses }) {
   const [selected, setSelected] = useState(null);
   const [sort, setSort] = useState({ field: "risk_score", dir: "desc" });
 
-  const sorted = [...clauses].sort((a, b) => {
+  // Clause numbers follow the order in the contract, whatever the sort.
+  const numbered = clauses.map((c, i) => ({ ...c, _n: i + 1 }));
+  const sorted = [...numbered].sort((a, b) => {
     const av = a[sort.field], bv = b[sort.field];
     if (typeof av === "number") return sort.dir === "asc" ? av - bv : bv - av;
     return sort.dir === "asc"
@@ -49,61 +39,60 @@ export default function ClauseTable({ clauses }) {
   const toggleSort = (field) =>
     setSort(s => ({ field, dir: s.field === field && s.dir === "desc" ? "asc" : "desc" }));
 
-  const SortIcon = ({ field }) =>
-    sort.field === field ? (sort.dir === "asc" ? " ↑" : " ↓") : " ↕";
+  const arrow = (field) => (sort.field === field ? (sort.dir === "asc" ? "↑" : "↓") : "");
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-50">
-          <h2 className="font-semibold text-gray-900">Clause-by-Clause Review</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Click a row to view full details</p>
+      <section data-tour="clauses" className="overflow-hidden rounded-[4px] border border-rule bg-sheet">
+        <div className="px-5 pt-5 pb-3 sm:px-7 sm:pt-7">
+          <h2 className="font-serif text-[21px] font-semibold text-ink">Clause by clause</h2>
+          <p className="mt-0.5 text-[13px] text-ink-3">
+            Every clause, marked up. Click one to read it with the reasoning and a suggested rewrite.
+          </p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[620px] text-[14px]">
             <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-8">#</th>
-                {[
-                  { label: "Clause",   field: "clause_title" },
-                  { label: "Type",     field: "clause_type" },
-                  { label: "Category", field: "category" },
-                  { label: "Score",    field: "risk_score" },
-                ].map(({ label, field }) => (
-                  <th key={field}
-                    className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-800 select-none"
-                    onClick={() => toggleSort(field)}
-                  >
-                    {label}<SortIcon field={field} />
+              <tr className="border-y border-rule text-left">
+                <th className="label w-12 py-2.5 pl-5 sm:pl-7">§</th>
+                {COLUMNS.map(({ label, field }) => (
+                  <th key={field} className="py-2.5 pr-4">
+                    <button onClick={() => toggleSort(field)} className="label hover:text-ink">
+                      {label} <span className="num">{arrow(field)}</span>
+                    </button>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {sorted.map((clause, i) => {
+            <tbody>
+              {sorted.map((clause) => {
                 const cat = clause.category || "Moderate Risk";
-                const badge = CATEGORY_BADGE[cat] || CATEGORY_BADGE["Moderate Risk"];
+                const s = categoryStyle(cat);
                 return (
-                  <tr key={i} className="hover:bg-blue-50 cursor-pointer transition-colors"
+                  <tr
+                    key={clause._n}
                     onClick={() => setSelected(clause)}
+                    className="cursor-pointer border-b border-rule last:border-b-0 hover:bg-desk"
                   >
-                    <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
-                    <td className="px-4 py-3 max-w-[180px]">
-                      <span className="font-medium text-gray-800 truncate block">{clause.clause_title}</span>
+                    <td className="num py-3 pl-5 align-top text-[12px] text-ink-3 sm:pl-7">{clause._n}</td>
+                    <td className="max-w-[240px] py-3 pr-4 align-top">
+                      <span className={`block truncate font-serif text-[15px] text-ink ${s.risky && cat !== "Moderate Risk" ? "redline" : ""}`}>
+                        {clause.clause_title}
+                      </span>
                       {clause.enforceability_concern && (
-                        <span className="text-purple-600 text-xs">⚠ enforceability concern</span>
+                        <span className="text-[12px] text-mark">May not be enforceable as written</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{clause.clause_type}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge}`}>{cat}</span>
+                    <td className="py-3 pr-4 align-top text-[13px] text-ink-3">{clause.clause_type}</td>
+                    <td className="py-3 pr-4 align-top">
+                      <span className={`inline-block border-l-2 ${s.rule} pl-2 text-[13px] font-medium ${s.text}`}>{cat}</span>
                       {clause.needs_review && (
-                        <span className="block mt-1 text-amber-600 text-xs" title="Jev is split between categories">
-                          ● check: low confidence
+                        <span className="mt-0.5 block text-[12px] text-warn" title="Jev is split between categories">
+                          Check this one: low confidence
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="py-3 pr-5 align-top sm:pr-7">
                       <ScoreBar score={clause.risk_score} category={cat} />
                     </td>
                   </tr>
@@ -112,7 +101,7 @@ export default function ClauseTable({ clauses }) {
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       {selected && <ClauseDetail clause={selected} onClose={() => setSelected(null)} />}
     </>
