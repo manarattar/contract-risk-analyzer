@@ -326,14 +326,17 @@ def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -
     # Retry up to 3 times on rate-limit (429) with 65-second backoff
     for attempt in range(3):
         try:
-            response = client.chat.completions.create(
-                model=(settings.azure_openai_chat_deployment if settings.llm_provider == "azure_openai" else settings.model_name),
-                messages=[
+            kwargs = {
+                "model": (settings.azure_openai_chat_deployment
+                          if settings.llm_provider == "azure_openai" else settings.model_name),
+                "messages": [
                     {"role": "system", "content": SYSTEM_MESSAGE},
                     {"role": "user", "content": prompt},
                 ],
-                temperature=temperature,
-            )
+            }
+            if settings.llm_use_temperature:
+                kwargs["temperature"] = temperature
+            response = client.chat.completions.create(**kwargs)
             return response.choices[0].message.content
         except openai.RateLimitError:
             if attempt < 1:

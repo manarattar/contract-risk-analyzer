@@ -5,6 +5,7 @@ param postgresAdminLogin string
 param postgresAdminPassword string
 param backendImage string
 param frontendImage string
+param chatModelName string
 param chatModelVersion string
 param chatCapacity int
 param embeddingCapacity int
@@ -96,10 +97,10 @@ resource openai 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
 
 resource chat 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = {
   parent: openai
-  name: 'gpt-4o-mini'
+  name: chatModelName
   sku: { name: 'GlobalStandard', capacity: chatCapacity }
   properties: {
-    model: { format: 'OpenAI', name: 'gpt-4o-mini', version: chatModelVersion }
+    model: { format: 'OpenAI', name: chatModelName, version: chatModelVersion }
     versionUpgradeOption: 'NoAutoUpgrade'
   }
 }
@@ -112,6 +113,8 @@ resource embedding 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01'
     model: { format: 'OpenAI', name: 'text-embedding-3-small', version: '1' }
     versionUpgradeOption: 'NoAutoUpgrade'
   }
+  // Azure OpenAI allows one deployment operation per account at a time.
+  dependsOn: [chat]
 }
 
 resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
@@ -166,6 +169,7 @@ resource backend 'Microsoft.App/containerApps@2024-03-01' = {
           { name: 'AZURE_SEARCH_INDEX', value: 'contract-chunks' }
           { name: 'AZURE_OPENAI_ENDPOINT', value: openai.properties.endpoint }
           { name: 'AZURE_OPENAI_CHAT_DEPLOYMENT', value: chat.name }
+          { name: 'LLM_USE_TEMPERATURE', value: 'false' }
           { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', value: embedding.name }
           { name: 'AZURE_OPENAI_API_VERSION', value: '2024-10-21' }
           { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }

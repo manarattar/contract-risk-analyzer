@@ -13,7 +13,8 @@ param contactEmails string[]
 param budgetAmount int = 10
 param backendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-param chatModelVersion string = '2024-07-18'
+param chatModelName string = 'gpt-5.4-mini'
+param chatModelVersion string = '2026-03-17'
 param chatCapacity int = 10
 param embeddingCapacity int = 10
 param corsOrigins string = '*'
@@ -33,6 +34,7 @@ module core 'modules/core.bicep' = {
     postgresAdminPassword: postgresAdminPassword
     backendImage: backendImage
     frontendImage: frontendImage
+    chatModelName: chatModelName
     chatModelVersion: chatModelVersion
     chatCapacity: chatCapacity
     embeddingCapacity: embeddingCapacity
