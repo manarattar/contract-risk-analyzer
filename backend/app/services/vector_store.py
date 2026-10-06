@@ -80,6 +80,12 @@ class AzureSearchStore:
             model=self.deployment, input=texts).data]
 
     def store_chunks(self, doc_id, chunks):
+        escaped = doc_id.replace("'", "''")
+        existing = self.client.search(
+            search_text="*", filter=f"doc_id eq '{escaped}'", select=["id"])
+        ids = [{"id": item["id"]} for item in existing]
+        if ids:
+            self.client.delete_documents(documents=ids)
         if not chunks:
             return
         texts = [chunk["text"] for chunk in chunks]

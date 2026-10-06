@@ -56,12 +56,21 @@ Selected by env vars; defaults keep today's behaviour exactly.
 8. Do not commit `data/`, `chroma/`, `venv/`, `.env`.
 
 ## Phase 2 — Infrastructure as code (Bicep)
-`infra/main.bicep` + params: resource group scope; Log Analytics + App Insights; Container
-Apps environment + app (managed identity, scale to zero); Azure OpenAI account + chat and
-embedding deployments; AI Search (free tier); Storage account + container; PostgreSQL
-Flexible Server (B1ms) + database; Static Web App; role assignments for the managed
-identity (Blob Data Contributor, Search Index Data Contributor, Cognitive Services OpenAI
-User); budget alert (EUR 10/month). One-command deploy and teardown documented.
+Constraints found 2026-10-06: the target is the **"Azure for Students"** subscription. Its policy
+only allows `austriaeast, polandcentral, switzerlandnorth, belgiumcentral, swedencentral`, so
+everything goes in **swedencentral**. Static Web Apps is not offered in those regions, so the
+**frontend runs as a second Container App** built from `frontend/Dockerfile` (nginx). The same
+Azure login can also see VU university subscriptions: every script must pass
+`--subscription "Azure for Students"` explicitly.
+
+`infra/main.bicep` (subscription scope, creates the resource group) + modules + params:
+Log Analytics + App Insights; Container Apps environment; backend app (system-assigned managed
+identity, external ingress on 8000, scale 0-1) and frontend app; Azure OpenAI account + chat and
+embedding deployments; AI Search (free tier); Storage account + `uploads` container; PostgreSQL
+Flexible Server (Burstable B1ms) + database; role assignments for the backend identity (Storage
+Blob Data Contributor, Search Index Data Contributor, Cognitive Services OpenAI User); budget alert
+(EUR 10/month). Plus a script that creates the AI Search index, and one-command deploy / what-if /
+teardown scripts.
 
 ## Phase 3 — CI/CD (GitHub Actions)
 PR: ruff, pytest, quick eval subset. Main: build backend image -> GHCR -> update Container
