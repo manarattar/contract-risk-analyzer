@@ -9,9 +9,8 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
     HRFlowable, KeepTogether,
 )
-from reportlab.lib.enums import TA_CENTER
 
-from app.schemas import ContractAnalysis, ClauseCategory, MissingClauseRelevance, RiskLevel
+from app.schemas import ContractAnalysis, RiskLevel
 
 RISK_COLOR = {
     RiskLevel.HIGH:   colors.HexColor("#DC2626"),
@@ -267,7 +266,6 @@ def generate_report(analysis: ContractAnalysis, filename: str) -> BytesIO:
 
     # Detailed clause blocks
     detail_style = ParagraphStyle("det", parent=styles["Normal"], fontSize=8, leading=12)
-    label_style = ParagraphStyle("lbl2", parent=styles["Normal"], fontSize=8, fontName="Helvetica-Bold")
 
     for i, clause in enumerate(analysis.clauses, 1):
         cat_color = CATEGORY_COLOR.get(clause.category.value, colors.grey)

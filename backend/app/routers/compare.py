@@ -1,7 +1,7 @@
 import uuid
-import os
 import concurrent.futures
 from pathlib import Path
+from app.services.storage import get_storage, sanitize_filename
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
@@ -28,7 +28,8 @@ def _extension(filename: str) -> str:
 
 def _analyze_one(file_path: str, file_type: str):
     settings = get_settings()
-    text = extract_text(file_path, file_type)
+    with get_storage().local_path(file_path) as path:
+        text = extract_text(path, file_type)
     clauses = split_into_clauses(text)
     if settings.use_mock:
         return get_mock_analysis()
@@ -65,9 +66,10 @@ def _run_comparison(
             db.commit()
         raise
     finally:
-        for p in [path_a, path_b]:
+        storage = get_storage()
+        for ref in (path_a, path_b):
             try:
-                os.remove(p)
+                storage.delete(ref)
             except Exception:
                 pass
 
@@ -91,18 +93,12 @@ async def start_compare(
         if len(content) > MAX_SIZE_BYTES:
             raise HTTPException(400, "File exceeds 10 MB limit.")
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     comparison_id = str(uuid.uuid4())
-
     ext_a = _extension(file_a.filename or "file_a.txt")
     ext_b = _extension(file_b.filename or "file_b.txt")
-    path_a = str(UPLOAD_DIR / f"{comparison_id}_a_{file_a.filename}")
-    path_b = str(UPLOAD_DIR / f"{comparison_id}_b_{file_b.filename}")
-
-    with open(path_a, "wb") as f:
-        f.write(content_a)
-    with open(path_b, "wb") as f:
-        f.write(content_b)
+    storage = get_storage()
+    path_a = storage.save(f"{comparison_id}_a_{sanitize_filename(file_a.filename)}", content_a)
+    path_b = storage.save(f"{comparison_id}_b_{sanitize_filename(file_b.filename)}", content_b)
 
     row = Comparison(
         id=comparison_id,

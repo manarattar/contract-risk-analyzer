@@ -1,9 +1,9 @@
-import os
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_settings as _get_settings
 from app.database import create_tables
 from app.routers import upload, analysis, qa, report, compare
 
@@ -13,7 +13,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-from app.config import get_settings as _get_settings
 _settings = _get_settings()
 app.add_middleware(
     CORSMiddleware,
@@ -32,8 +31,10 @@ app.include_router(compare.router, prefix="/api")
 
 @app.on_event("startup")
 def startup():
-    Path("./data/uploads").mkdir(parents=True, exist_ok=True)
-    Path("./chroma").mkdir(parents=True, exist_ok=True)
+    if _settings.storage_backend == "local":
+        Path("./data/uploads").mkdir(parents=True, exist_ok=True)
+    if _settings.vector_backend == "chroma":
+        Path("./chroma").mkdir(parents=True, exist_ok=True)
     create_tables()
 
 

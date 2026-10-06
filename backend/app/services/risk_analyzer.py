@@ -5,6 +5,7 @@ from typing import List, Dict
 
 import openai
 from openai import OpenAI
+from app.services.llm_client import get_llm_client
 
 from app.config import get_settings
 from app.services.jev_judge import jev_available, judge_clauses
@@ -318,8 +319,7 @@ def _extract_json(content: str):
 
 
 def _get_client() -> OpenAI:
-    settings = get_settings()
-    return OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url)
+    return get_llm_client()
 
 
 def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -> str:
@@ -327,7 +327,7 @@ def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -
     for attempt in range(3):
         try:
             response = client.chat.completions.create(
-                model=settings.model_name,
+                model=(settings.azure_openai_chat_deployment if settings.llm_provider == "azure_openai" else settings.model_name),
                 messages=[
                     {"role": "system", "content": SYSTEM_MESSAGE},
                     {"role": "user", "content": prompt},
@@ -459,7 +459,7 @@ def _analyze_clauses_batch(
                 data["affected_party"] = data.get("affected_party", "Both Parties")
                 results.append(ClauseAnalysis(**data))
             return results
-        except Exception as e:
+        except Exception:
             if attempt == 0:
                 time.sleep(1)
             else:

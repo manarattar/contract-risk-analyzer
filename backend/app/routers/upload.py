@@ -1,6 +1,6 @@
 import uuid
-import os
 from pathlib import Path
+from app.services.storage import get_storage, sanitize_filename
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
@@ -28,7 +28,8 @@ def _extension(filename: str) -> str:
 def _run_analysis(doc_id: str, file_path: str, file_type: str, db: Session):
     """Background task: parse → split → analyze → store."""
     try:
-        text = extract_text(file_path, file_type)
+        with get_storage().local_path(file_path) as path:
+            text = extract_text(path, file_type)
         clauses = split_into_clauses(text)
 
         settings = get_settings()
@@ -41,7 +42,6 @@ def _run_analysis(doc_id: str, file_path: str, file_type: str, db: Session):
         vector_store.store_chunks(doc_id, clauses)
 
         # Persist analysis to SQLite
-        import json
         analysis_row = Analysis(
             document_id=doc_id,
             analysis_json=analysis.model_dump_json(),
@@ -76,13 +76,9 @@ async def upload_contract(
     if len(content) > MAX_SIZE_BYTES:
         raise HTTPException(400, "File exceeds 10 MB limit.")
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     doc_id = str(uuid.uuid4())
-    safe_name = f"{doc_id}_{file.filename}"
-    file_path = str(UPLOAD_DIR / safe_name)
-
-    with open(file_path, "wb") as f:
-        f.write(content)
+    safe_name = f"{doc_id}_{sanitize_filename(file.filename)}"
+    file_path = get_storage().save(safe_name, content)
 
     doc = Document(id=doc_id, filename=file.filename, file_type=ext, status="processing")
     db.add(doc)
