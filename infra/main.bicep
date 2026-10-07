@@ -13,8 +13,8 @@ param contactEmails string[]
 param budgetAmount int = 10
 param backendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 param frontendImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
-param chatModelName string = 'gpt-5.4-mini'
-param chatModelVersion string = '2026-03-17'
+param chatModelName string = 'gpt-5-mini'
+param chatModelVersion string = '2025-08-07'
 param chatCapacity int = 10
 param embeddingCapacity int = 10
 param corsOrigins string = '*'
