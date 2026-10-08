@@ -33,7 +33,7 @@ resource insights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
+resource environment 'Microsoft.App/managedEnvironments@2025-01-01' = {
   name: '${namePrefix}-env'
   location: location
   properties: {
@@ -45,6 +45,11 @@ resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
       }
     }
   }
+}
+
+resource userIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: 'contract-analyzer-backend-id'
+  location: location
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -144,10 +149,13 @@ resource contracts 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-
 
 var databaseUrl = 'postgresql+psycopg://${postgresAdminLogin}:${uriComponent(postgresAdminPassword)}@${postgres.properties.fullyQualifiedDomainName}:5432/contracts?sslmode=require'
 
-resource backend 'Microsoft.App/containerApps@2024-03-01' = {
+resource backend 'Microsoft.App/containerApps@2025-01-01' = {
   name: '${namePrefix}-backend'
   location: location
-  identity: { type: 'SystemAssigned' }
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: { '${userIdentity.id}': {} }
+  }
   properties: {
     managedEnvironmentId: environment.id
     configuration: {
@@ -163,6 +171,7 @@ resource backend 'Microsoft.App/containerApps@2024-03-01' = {
           { name: 'STORAGE_BACKEND', value: 'azure_blob' }
           { name: 'VECTOR_BACKEND', value: 'azure_search' }
           { name: 'LLM_PROVIDER', value: 'azure_openai' }
+          { name: 'AZURE_CLIENT_ID', value: userIdentity.properties.clientId }
           { name: 'AZURE_STORAGE_ACCOUNT_URL', value: storage.properties.primaryEndpoints.blob }
           { name: 'AZURE_STORAGE_CONTAINER', value: uploads.name }
           { name: 'AZURE_SEARCH_ENDPOINT', value: 'https://${search.name}.search.windows.net' }
@@ -182,7 +191,7 @@ resource backend 'Microsoft.App/containerApps@2024-03-01' = {
   }
 }
 
-resource frontend 'Microsoft.App/containerApps@2024-03-01' = {
+resource frontend 'Microsoft.App/containerApps@2025-01-01' = {
   name: '${namePrefix}-frontend'
   location: location
   properties: {
@@ -201,31 +210,31 @@ resource frontend 'Microsoft.App/containerApps@2024-03-01' = {
 }
 
 resource storageRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storage.id, backend.id, 'blob-contributor')
+  name: guid(storage.id, userIdentity.id, 'blob-contributor')
   scope: storage
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-    principalId: backend.identity.principalId
+    principalId: userIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource searchRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(search.id, backend.id, 'search-index-data-contributor')
+  name: guid(search.id, userIdentity.id, 'search-index-data-contributor')
   scope: search
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8ebe5a00-799e-43f5-93ac-243d3dce84a7')
-    principalId: backend.identity.principalId
+    principalId: userIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 resource openaiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(openai.id, backend.id, 'openai-user')
+  name: guid(openai.id, userIdentity.id, 'openai-user')
   scope: openai
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
-    principalId: backend.identity.principalId
+    principalId: userIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }

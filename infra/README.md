@@ -74,6 +74,8 @@ Both scripts find the Flexible Server in the named resource group and pass `--su
 
 ## Known trade-offs
 
+Express Container Apps environments support user-assigned managed identities for app runtime, but not system-assigned identities. The backend uses a user-assigned identity so it can run in Express and standard environments. After the switch, stale role assignments for the old system identity can be removed with `az role assignment delete --ids <assignment-id>`.
+
 The `AllowAzureServices` (`0.0.0.0`) PostgreSQL firewall rule permits any Azure-hosted client to attempt connections; the admin password and TLS are still required. VNet integration and private endpoints are the production upgrade.
 
 ## Remove resources
