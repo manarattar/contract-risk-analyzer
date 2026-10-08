@@ -1,0 +1,97 @@
+{
+  "id": "incomplete",
+  "title": "Freelance Development Agreement",
+  "text": "\nFREELANCE DEVELOPMENT AGREEMENT\n\nThis Agreement is between StartupCo (\"Client\") and Jane Smith (\"Developer\") effective March 1, 2025.\n\n1. Work\nDeveloper will build a mobile application as described in the attached brief. Specific features\ninclude user authentication, payment processing, and a dashboard. The parties may agree additional\nfeatures in writing.\n\n2. Payment\nClient shall pay Developer USD 8,000 in two instalments: USD 4,000 on signing and USD 4,000 on\nfinal delivery. All payments are due within 14 days of the applicable milestone.\n\n3. Timeline\nDeveloper shall use reasonable endeavours to complete the application by June 30, 2025.\nBoth parties acknowledge that software development timelines may shift due to technical complexity.\n\n4. Intellectual Property\nAll code and materials produced under this Agreement shall be owned by Client upon receipt of full\npayment. Developer retains the right to include the project in her portfolio.\n\n5. Confidentiality\nDeveloper shall keep Client's business information, user data, and product plans confidential\nduring and for two years after this Agreement. Developer shall not use Client's information for\nany purpose other than performing the services.\n\n6. Termination\nEither party may terminate this Agreement on 14 days' written notice. On termination, Client\nshall pay for work completed and accepted to date on a pro-rata basis.\n\n7. Governing Law\nThis Agreement is governed by the laws of the State of California, USA.\n\nSigned,\nClient: ______________________  Developer: ______________________\n",
+  "clauses": [
+    {
+      "match": "1. Work",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "2. Payment",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "3. Timeline",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "4. Intellectual Property",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "5. Confidentiality",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "6. Termination",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "7. Governing Law",
+      "expected_risk": "Low"
+    }
+  ],
+  "expected_missing": [
+    {
+      "name": "Liability",
+      "aliases": [
+        "liability",
+        "limitation of liability"
+      ]
+    },
+    {
+      "name": "Dispute Resolution",
+      "aliases": [
+        "dispute resolution",
+        "arbitration"
+      ]
+    },
+    {
+      "name": "Acceptance Criteria",
+      "aliases": [
+        "acceptance criteria",
+        "acceptance procedure"
+      ]
+    },
+    {
+      "name": "Data Protection",
+      "aliases": [
+        "data protection",
+        "privacy"
+      ]
+    }
+  ],
+  "qa": [
+    {
+      "question": "How much is the project fee?",
+      "evidence": "USD 8,000 in two instalments",
+      "must_include": [
+        [
+          "8,000",
+          "8000"
+        ]
+      ]
+    },
+    {
+      "question": "When is the target completion date?",
+      "evidence": "June 30, 2025",
+      "must_include": [
+        [
+          "june 30",
+          "30 june"
+        ]
+      ]
+    },
+    {
+      "question": "What is the termination notice?",
+      "evidence": "14 days' written notice",
+      "must_include": [
+        [
+          "14 days",
+          "fourteen days"
+        ]
+      ]
+    }
+  ]
+}

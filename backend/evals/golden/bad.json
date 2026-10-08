@@ -1,0 +1,88 @@
+{
+  "id": "bad",
+  "title": "Service Agreement",
+  "text": "\nSERVICE AGREEMENT\nThis Agreement is made between The Client and The Provider on today's date.\n\n1. Work\nThe Provider will do the work that the Client wants. The work may include design, development,\nconsulting, marketing, writing, support, and other things as needed.\n\n2. Payment\nThe Client will pay the Provider a fair amount after the work is mostly finished.\nPayment should be made soon, unless the Client is not satisfied.\nThe Provider may charge extra if the work is harder than expected.\n\n3. Timeline\nThe Provider will try to finish the work quickly. The Client understands that delays may happen.\nNo exact delivery date is guaranteed, but the work should be completed within a reasonable time.\n\n4. Changes\nThe Client can request unlimited changes. The Provider may refuse changes that are too much.\nIf changes are requested, the price may or may not increase depending on the situation.\n\n5. Ownership\nThe Client owns the work after payment. The Provider also owns anything created during the project\nand may use it for other clients. Both parties can use the materials however they want.\n\n6. Confidentiality\nBoth parties agree not to share secret information unless they need to, want to, or are asked\nby someone important.\n\n7. Termination\nEither party can end this Agreement at any time for any reason.\nIf the Agreement ends, the Client may still need to pay something, but only if the Provider deserves it.\n\n8. Liability\nThe Provider is not responsible for any damages, problems, losses, errors, delays, security issues,\nor anything else that happens, even if caused by the Provider.\n\n9. Warranties\nThe Provider promises the work will be good, but does not guarantee that it will work, be correct,\nbe legal, or meet the Client's needs.\n\n10. Disputes\nIf there is a dispute, the parties will talk about it. If they cannot agree, they may go to court\nor arbitration or another process depending on what seems best.\n\n11. Governing Law\nThis Agreement is governed by the laws of the place where the work happens or where one of the\nparties lives.\n\n12. Entire Agreement\nThis Agreement is the full agreement, except for emails, messages, verbal promises, assumptions,\nearlier discussions, and anything both parties understood.\n\nSigned,\nClient: ______________________  Provider: ______________________\n",
+  "clauses": [
+    {
+      "match": "1. Work",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "2. Payment",
+      "expected_risk": "High"
+    },
+    {
+      "match": "3. Timeline",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "4. Changes",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "5. Ownership",
+      "expected_risk": "High"
+    },
+    {
+      "match": "6. Confidentiality",
+      "expected_risk": "High"
+    },
+    {
+      "match": "7. Termination",
+      "expected_risk": "High"
+    },
+    {
+      "match": "8. Liability",
+      "expected_risk": "High"
+    },
+    {
+      "match": "9. Warranties",
+      "expected_risk": "High"
+    },
+    {
+      "match": "10. Disputes",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "11. Governing Law",
+      "expected_risk": "Medium"
+    },
+    {
+      "match": "12. Entire Agreement",
+      "expected_risk": "High"
+    }
+  ],
+  "expected_missing": [],
+  "qa": [
+    {
+      "question": "What payment amount is agreed?",
+      "evidence": "fair amount",
+      "must_include": [
+        [
+          "fair amount",
+          "fair price"
+        ]
+      ]
+    },
+    {
+      "question": "Who owns the project work?",
+      "evidence": "The Client owns the work after payment",
+      "must_include": [
+        [
+          "client",
+          "provider"
+        ]
+      ]
+    },
+    {
+      "question": "Can either party terminate?",
+      "evidence": "Either party can end this Agreement at any time",
+      "must_include": [
+        [
+          "either party",
+          "both parties"
+        ]
+      ]
+    }
+  ]
+}

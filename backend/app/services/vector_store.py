@@ -52,6 +52,10 @@ class ChromaStore:
     store_chunks = staticmethod(_chroma_store_chunks)
     search = staticmethod(_chroma_search)
 
+    @staticmethod
+    def delete(doc_id):
+        _get_client().delete_collection(_collection_name(doc_id))
+
 
 class AzureSearchStore:
     def __init__(self):
@@ -80,12 +84,7 @@ class AzureSearchStore:
             model=self.deployment, input=texts).data]
 
     def store_chunks(self, doc_id, chunks):
-        escaped = doc_id.replace("'", "''")
-        existing = self.client.search(
-            search_text="*", filter=f"doc_id eq '{escaped}'", select=["id"])
-        ids = [{"id": item["id"]} for item in existing]
-        if ids:
-            self.client.delete_documents(documents=ids)
+        self.delete(doc_id)
         if not chunks:
             return
         texts = [chunk["text"] for chunk in chunks]
@@ -94,6 +93,14 @@ class AzureSearchStore:
                                        "doc_id": doc_id, "text": chunk["text"],
                                        "content_vector": vector}
                                       for chunk, vector in zip(chunks, vectors)])
+
+    def delete(self, doc_id):
+        escaped = doc_id.replace("'", "''")
+        existing = self.client.search(
+            search_text="*", filter=f"doc_id eq '{escaped}'", select=["id"])
+        ids = [{"id": item["id"]} for item in existing]
+        for start in range(0, len(ids), 1000):
+            self.client.delete_documents(documents=ids[start:start + 1000])
 
     def search(self, doc_id, query, n=4):
         from azure.search.documents.models import VectorizedQuery
@@ -118,3 +125,7 @@ def store_chunks(doc_id: str, chunks: List[dict]) -> None:
 
 def search(doc_id: str, query: str, n: int = 4) -> List[str]:
     return get_vector_store().search(doc_id, query, n)
+
+
+def delete_document(doc_id: str) -> None:
+    get_vector_store().delete(doc_id)

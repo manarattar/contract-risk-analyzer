@@ -245,3 +245,5 @@ output openaiEndpoint string = openai.properties.endpoint
 output searchEndpoint string = 'https://${search.name}.search.windows.net'
 output storageAccountUrl string = storage.properties.primaryEndpoints.blob
 output searchServiceId string = search.id
+
+output openaiAccountName string = openai.name

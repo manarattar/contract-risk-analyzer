@@ -1,0 +1,83 @@
+{
+  "id": "good",
+  "title": "Software Development Services Agreement",
+  "text": "\nSOFTWARE DEVELOPMENT SERVICES AGREEMENT\n\nThis Software Development Services Agreement (\"Agreement\") is entered into as of January 1, 2025\n(\"Effective Date\") by and between Acme Corp, a Delaware corporation (\"Client\"), and DevPro Ltd,\na UK private limited company (\"Provider\").\n\n1. Services\nProvider shall deliver the software deliverables described in Schedule A (\"Deliverables\") in\naccordance with the specifications set out therein. Any changes to the scope must be submitted\nin writing via a Change Request Form and approved by both parties before work commences.\n\n2. Payment\nClient shall pay Provider GBP 15,000 per milestone as set out in Schedule B. Payment is due within\n30 days of receipt of a valid invoice. Late payments shall accrue interest at 1.5% per month on\noverdue amounts. Client may withhold payment for genuinely disputed deliverables pending resolution,\nprovided Client notifies Provider in writing within 5 business days of invoice receipt.\n\n3. Delivery and Acceptance\nProvider shall deliver each milestone by the dates specified in Schedule B. Client shall have\n14 days following delivery to review and either (a) accept the Deliverable in writing, or\n(b) provide a written list of defects. Provider shall correct confirmed defects within 14 days\nat no additional charge.\n\n4. Intellectual Property\nAll custom Deliverables created specifically for Client under this Agreement shall be owned by\nClient upon full payment of fees. Provider retains ownership of all pre-existing tools, libraries,\nframeworks, and methodologies (\"Provider IP\") and grants Client a perpetual, royalty-free,\nnon-exclusive licence to use Provider IP solely as incorporated in the Deliverables.\n\n5. Confidentiality\nEach party (\"Receiving Party\") shall hold in confidence all non-public information disclosed by\nthe other party (\"Disclosing Party\") that is marked as confidential or that a reasonable person\nwould understand to be confidential (\"Confidential Information\"). Confidential Information shall\nnot be disclosed except: (a) with prior written consent; (b) to employees or contractors who need\nto know and are bound by equivalent obligations; or (c) as required by law, court order, or\nregulatory authority, provided the Receiving Party gives prior written notice where legally permitted.\nThis obligation survives termination for five years.\n\n6. Liability\nProvider's total aggregate liability for any claims under or in connection with this Agreement\nshall not exceed the total fees paid by Client in the twelve (12) months preceding the event\ngiving rise to the claim. The foregoing limitation shall not apply in cases of gross negligence,\nwilful misconduct, fraud, or breach of confidentiality obligations.\n\n7. Termination\nEither party may terminate this Agreement for convenience on 30 days' written notice.\nEither party may terminate immediately on written notice if the other commits a material breach\nthat remains unremedied for 14 days after written notice. On termination, Client shall pay for\nall accepted Deliverables delivered up to the termination date; no further amounts shall be owed.\n\n8. Dispute Resolution\nAny dispute arising under this Agreement shall first be referred to senior representatives of\neach party for good-faith resolution. If unresolved within 20 business days, the dispute shall\nbe submitted to binding arbitration under the LCIA Rules in London, England. The arbitration\nshall be conducted in English by a sole arbitrator. This clause does not prevent either party\nfrom seeking urgent injunctive relief from a competent court.\n\n9. Governing Law\nThis Agreement is governed by and construed in accordance with the laws of England and Wales.\nThe parties irrevocably submit to the exclusive jurisdiction of the courts of England and Wales\nfor matters not subject to arbitration.\n\n10. Warranties\nProvider warrants that: (a) the Deliverables shall materially conform to the specifications in\nSchedule A for 90 days following acceptance; (b) Provider has the right to grant the licences\nand assignments set out herein; and (c) the Deliverables shall not infringe any third-party\nintellectual property rights.\n\n11. Entire Agreement\nThis Agreement, together with its Schedules, constitutes the entire agreement between the parties\nwith respect to its subject matter and supersedes all prior written and oral agreements. No amendment\nshall be effective unless in writing and signed by authorised representatives of both parties.\n\nSigned,\nClient: ______________________  Provider: ______________________\n",
+  "clauses": [
+    {
+      "match": "1. Services",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "2. Payment",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "3. Delivery and Acceptance",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "4. Intellectual Property",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "5. Confidentiality",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "6. Liability",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "7. Termination",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "8. Dispute Resolution",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "9. Governing Law",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "10. Warranties",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "11. Entire Agreement",
+      "expected_risk": "Low"
+    }
+  ],
+  "expected_missing": [],
+  "qa": [
+    {
+      "question": "When are invoices payable?",
+      "evidence": "Payment is due within\n30 days",
+      "must_include": [
+        [
+          "30 days",
+          "thirty days"
+        ]
+      ]
+    },
+    {
+      "question": "Who owns custom deliverables?",
+      "evidence": "All custom Deliverables created specifically for Client",
+      "must_include": [
+        [
+          "client",
+          "customer"
+        ]
+      ]
+    },
+    {
+      "question": "What law governs?",
+      "evidence": "laws of England and Wales",
+      "must_include": [
+        [
+          "england and wales"
+        ]
+      ]
+    }
+  ]
+}

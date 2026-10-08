@@ -63,6 +63,7 @@ module githubIdentity 'modules/github-identity.bicep' = {
     githubRepo: githubRepo
     githubEnvironment: githubEnvironment
     searchServiceId: core.outputs.searchServiceId
+    openaiAccountName: core.outputs.openaiAccountName
   }
 }
 

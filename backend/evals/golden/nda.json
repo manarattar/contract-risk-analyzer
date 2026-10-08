@@ -1,0 +1,72 @@
+{
+  "id": "nda",
+  "title": "Mutual Non-Disclosure Agreement",
+  "text": "MUTUAL NON-DISCLOSURE AGREEMENT\n\nThis Agreement is between Northstar Robotics Ltd and Harbor Labs Inc, effective 1 April 2025.\n\n1. Purpose\nThe parties may exchange confidential technical and commercial information solely to assess a possible joint robotics project. Neither party is required to proceed with a transaction.\n\n2. Confidential Information\nConfidential Information includes marked documents and information reasonably understood to be confidential. Public information, information independently developed, and information lawfully received from a third party are excluded.\n\n3. Use and Disclosure\nEach recipient may use Confidential Information only for the Purpose and disclose it to employees and advisers who need to know and are bound by equivalent duties. A recipient may disclose information required by law after giving notice where legally permitted.\n\n4. Additional Permitted Disclosures\nHarbor Labs may disclose Northstar's customer lists and prototype specifications to any prospective customer without Northstar's consent, despite the other restrictions in this Agreement.\n\n5. Duration\nNorthstar's confidentiality duties survive for ten years after termination. Harbor Labs' confidentiality duties end immediately on termination, including for trade secrets received from Northstar.\n\n6. Return of Materials\nWithin 15 days of a written request, each party will return or securely delete the other's Confidential Information, except one archival copy required by law.\n\n7. Liability\nNorthstar must indemnify Harbor Labs for all losses arising from any disclosure, including Harbor Labs' own negligence. Harbor Labs has no liability for its own unauthorized disclosure.\n\n8. Governing Law\nThis Agreement is governed by the laws of England and Wales. The courts of London have exclusive jurisdiction.\n",
+  "clauses": [
+    {
+      "match": "1. Purpose",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "2. Confidential Information",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "3. Use and Disclosure",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "4. Additional Permitted Disclosures",
+      "expected_risk": "High"
+    },
+    {
+      "match": "5. Duration",
+      "expected_risk": "High"
+    },
+    {
+      "match": "6. Return of Materials",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "7. Liability",
+      "expected_risk": "High"
+    },
+    {
+      "match": "8. Governing Law",
+      "expected_risk": "Low"
+    }
+  ],
+  "expected_missing": [],
+  "qa": [
+    {
+      "question": "May Harbor Labs share customer lists with prospects?",
+      "evidence": "Harbor Labs may disclose Northstar's customer lists",
+      "must_include": [
+        [
+          "prospective customer",
+          "prospects"
+        ]
+      ]
+    },
+    {
+      "question": "How long do Northstar duties survive?",
+      "evidence": "Northstar's confidentiality duties survive for ten years",
+      "must_include": [
+        [
+          "ten years",
+          "10 years"
+        ]
+      ]
+    },
+    {
+      "question": "When must materials be returned?",
+      "evidence": "Within 15 days of a written request",
+      "must_include": [
+        [
+          "15 days",
+          "fifteen days"
+        ]
+      ]
+    }
+  ]
+}

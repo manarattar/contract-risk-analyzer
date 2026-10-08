@@ -1,0 +1,76 @@
+{
+  "id": "saas",
+  "title": "SaaS Subscription Agreement",
+  "text": "SAAS SUBSCRIPTION AGREEMENT\n\nThis Agreement is between Cloudline Software Ltd (Provider) and Meridian Retail BV (Customer), effective 1 May 2025.\n\n1. Subscription\nProvider grants Customer a non-exclusive right to use the hosted inventory platform for 50 named users during the subscription term. Customer may not sublicense access.\n\n2. Fees\nCustomer pays EUR 2,000 per month, invoiced monthly in advance and due within 30 days. Taxes are excluded.\n\n3. Renewal\nThe initial term is 12 months and automatically renews for successive 12-month terms unless Customer gives written non-renewal notice at least 90 days before the term ends. Provider may decline renewal on 10 days' notice.\n\n4. Price Changes\nProvider may increase any fee at any time during the term without notice or Customer consent, and the increased fee applies to the next invoice.\n\n5. Service Levels\nProvider will make the platform available 99.9% of each calendar month, excluding scheduled maintenance announced 48 hours in advance. Customer receives a proportional service credit for missed availability.\n\n6. Data and Security\nCustomer owns its uploaded data. Provider will encrypt data in transit and at rest and notify Customer of a confirmed personal-data breach within 72 hours. Provider will return Customer data within 30 days after termination.\n\n7. Liability\nCustomer's liability for every claim is unlimited, including ordinary billing disputes. Provider's total liability for all claims is capped at one month's subscription fee, including Provider's gross negligence and data breaches.\n\n8. Termination\nEither party may terminate for a material breach that remains uncured 30 days after written notice. Fees for unused prepaid months will be refunded if Customer terminates for Provider's uncured breach.\n\n9. Governing Law\nThe laws of the Netherlands govern this Agreement. Disputes are submitted to the courts of Amsterdam.\n",
+  "clauses": [
+    {
+      "match": "1. Subscription",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "2. Fees",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "3. Renewal",
+      "expected_risk": "High"
+    },
+    {
+      "match": "4. Price Changes",
+      "expected_risk": "High"
+    },
+    {
+      "match": "5. Service Levels",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "6. Data and Security",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "7. Liability",
+      "expected_risk": "High"
+    },
+    {
+      "match": "8. Termination",
+      "expected_risk": "Low"
+    },
+    {
+      "match": "9. Governing Law",
+      "expected_risk": "Low"
+    }
+  ],
+  "expected_missing": [],
+  "qa": [
+    {
+      "question": "How much is the monthly fee?",
+      "evidence": "EUR 2,000 per month",
+      "must_include": [
+        [
+          "2,000",
+          "2000"
+        ]
+      ]
+    },
+    {
+      "question": "What notice avoids renewal?",
+      "evidence": "at least 90 days before the term ends",
+      "must_include": [
+        [
+          "90 days",
+          "ninety days"
+        ]
+      ]
+    },
+    {
+      "question": "When must the provider report a data breach?",
+      "evidence": "within 72 hours",
+      "must_include": [
+        [
+          "72 hours",
+          "seventy-two hours"
+        ]
+      ]
+    }
+  ]
+}

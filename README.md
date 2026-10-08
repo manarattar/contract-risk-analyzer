@@ -147,3 +147,6 @@ contract-risk-analyzer/
 | POST | `/api/qa` | Ask a question |
 | GET | `/api/report/{id}` | Download PDF report |
 | GET | `/api/health` | Health check |
+## Evaluation suite
+
+`backend/evals/` contains five golden contracts and a service-level evaluation runner. See [the evaluation guide](backend/evals/README.md) for setup, metrics, and reports.

@@ -19,3 +19,21 @@ def test_store_chunks_replaces_only_matching_document():
         "id": "doc'one-0", "doc_id": "doc'one", "text": "replacement",
         "content_vector": [0.1] * 1536,
     }])
+
+
+def test_delete_only_matching_document():
+    store = AzureSearchStore.__new__(AzureSearchStore)
+    store.client = Mock()
+    store.client.search.return_value = [{"id": "one"}, {"id": "two"}]
+    store.delete("eval-'bad")
+    store.client.search.assert_called_once_with(
+        search_text="*", filter="doc_id eq 'eval-''bad'", select=["id"])
+    store.client.delete_documents.assert_called_once_with(documents=[{"id": "one"}, {"id": "two"}])
+
+
+def test_delete_empty_document():
+    store = AzureSearchStore.__new__(AzureSearchStore)
+    store.client = Mock()
+    store.client.search.return_value = []
+    store.delete("eval-empty")
+    store.client.delete_documents.assert_not_called()

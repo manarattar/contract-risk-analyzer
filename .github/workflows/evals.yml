@@ -1,0 +1,63 @@
+name: Evals
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    paths:
+      - backend/app/services/**
+      - backend/evals/**
+      - backend/requirements.txt
+concurrency:
+  group: evals
+  cancel-in-progress: false
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment: azure
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Resolve Azure endpoints
+        env:
+          RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          SEARCH_NAME=$(az search service list -g "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION_ID" --query "[0].name" -o tsv)
+          OPENAI_NAME=$(az cognitiveservices account list -g "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION_ID" --query "[?kind=='OpenAI'].name | [0]" -o tsv)
+          test -n "$SEARCH_NAME" && test -n "$OPENAI_NAME"
+          OPENAI_ENDPOINT=$(az cognitiveservices account show -g "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION_ID" -n "$OPENAI_NAME" --query properties.endpoint -o tsv)
+          test -n "$OPENAI_ENDPOINT"
+          echo "AZURE_SEARCH_ENDPOINT=https://$SEARCH_NAME.search.windows.net" >> "$GITHUB_ENV"
+          echo "AZURE_OPENAI_ENDPOINT=$OPENAI_ENDPOINT" >> "$GITHUB_ENV"
+          echo "AZURE_OPENAI_CHAT_DEPLOYMENT=$(az cognitiveservices account deployment list -g "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION_ID" -n "$OPENAI_NAME" --query "[?properties.model.name!='text-embedding-3-small'].name | [0]" -o tsv)" >> "$GITHUB_ENV"
+      - name: Run evaluations
+        working-directory: backend
+        env:
+          PYTHONPATH: .
+          VECTOR_BACKEND: azure_search
+          LLM_PROVIDER: azure_openai
+          LLM_USE_TEMPERATURE: 'false'
+          AZURE_SEARCH_INDEX: contract-chunks
+          AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-3-small
+          AZURE_OPENAI_API_VERSION: '2024-10-21'
+        run: python -m evals.run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-reports
+          path: backend/evals/reports/
+          if-no-files-found: ignore
