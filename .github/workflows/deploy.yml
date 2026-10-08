@@ -67,6 +67,8 @@ jobs:
         env:
           RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
           SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          # The script imports the backend's app package.
+          PYTHONPATH: .
         run: |
           pip install -r requirements.txt
           SEARCH_NAME=$(az search service list -g "$RESOURCE_GROUP" --subscription "$SUBSCRIPTION_ID" --query "[0].name" -o tsv)
