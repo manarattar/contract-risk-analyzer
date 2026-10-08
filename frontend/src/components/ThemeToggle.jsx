@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 
 export default function ThemeToggle({ className = "flex h-9 w-9 items-center justify-center rounded-[3px] border border-rule text-ink-2 hover:border-ink hover:text-ink" }) {
   const [dark, setDark] = useState(() => document.documentElement.getAttribute("data-theme") === "dark");
@@ -21,3 +22,5 @@ export default function ThemeToggle({ className = "flex h-9 w-9 items-center jus
     </button>
   );
 }
+
+ThemeToggle.propTypes = { className: PropTypes.string };
