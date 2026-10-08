@@ -57,6 +57,10 @@ SYSTEM_MESSAGE = (
     "lean toward recognising it as normal. "
     "Always return valid JSON only — no explanations, no markdown, no preamble."
 )
+QA_SYSTEM_MESSAGE = (
+    "You are a contract analysis assistant. Answer in plain English prose. "
+    "Do not use JSON or markdown."
+)
 
 # ---------------------------------------------------------------------------
 # Prompts
@@ -322,7 +326,10 @@ def _get_client() -> OpenAI:
     return get_llm_client()
 
 
-def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -> str:
+def _call_llm(
+    client: OpenAI, settings, prompt: str, temperature: float = 0.2,
+    system_message: str = SYSTEM_MESSAGE,
+) -> str:
     # Retry up to 3 times on rate-limit (429) with 65-second backoff
     for attempt in range(3):
         try:
@@ -330,7 +337,7 @@ def _call_llm(client: OpenAI, settings, prompt: str, temperature: float = 0.2) -
                 "model": (settings.azure_openai_chat_deployment
                           if settings.llm_provider == "azure_openai" else settings.model_name),
                 "messages": [
-                    {"role": "system", "content": SYSTEM_MESSAGE},
+                    {"role": "system", "content": system_message},
                     {"role": "user", "content": prompt},
                 ],
             }
@@ -744,4 +751,14 @@ def answer_question(question: str, context_chunks: List[str]) -> str:
     settings = get_settings()
     client = _get_client()
     context = "\n\n---\n\n".join(context_chunks)
-    return _call_llm(client, settings, QA_PROMPT.format(context=context, question=question), temperature=0.3).strip()
+    answer = _call_llm(
+        client, settings, QA_PROMPT.format(context=context, question=question),
+        temperature=0.3, system_message=QA_SYSTEM_MESSAGE,
+    ).strip()
+    try:
+        parsed = json.loads(answer)
+    except json.JSONDecodeError:
+        return answer
+    if isinstance(parsed, dict) and len(parsed) == 1 and isinstance(parsed.get("answer"), str):
+        return parsed["answer"]
+    return answer

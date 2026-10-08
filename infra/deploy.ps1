@@ -4,8 +4,8 @@ param(
   [string]$AdminLogin = 'craadmin',
   [string[]]$ContactEmails,
   [securestring]$AdminPassword,
-  [string]$BackendImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest',
-  [string]$FrontendImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest',
+  [string]$BackendImage,
+  [string]$FrontendImage,
   [int]$ChatCapacity = 10,
   [int]$EmbeddingCapacity = 10
 )
@@ -18,13 +18,28 @@ if (-not $ContactEmails -or $ContactEmails.Count -eq 0) { $ContactEmails = @((Re
 if ($ContactEmails | Where-Object { [string]::IsNullOrWhiteSpace($_) }) { throw 'Contact emails must be nonempty.' }
 $plainPassword = [System.Net.NetworkCredential]::new('', $AdminPassword).Password
 try {
+  $placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+  if (-not $env:CRA_BACKEND_IMAGE -and -not $BackendImage) {
+    $ErrorActionPreference = 'Continue'
+    $BackendImage = (& $az containerapp show --subscription 'Azure for Students' -g $ResourceGroupName -n 'contract-analyzer-backend' --query 'properties.template.containers[0].image' --output tsv 2>$null)
+    $imageExitCode = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($imageExitCode -ne 0 -or -not $BackendImage) { $BackendImage = $placeholderImage }
+  }
+  if (-not $env:CRA_FRONTEND_IMAGE -and -not $FrontendImage) {
+    $ErrorActionPreference = 'Continue'
+    $FrontendImage = (& $az containerapp show --subscription 'Azure for Students' -g $ResourceGroupName -n 'contract-analyzer-frontend' --query 'properties.template.containers[0].image' --output tsv 2>$null)
+    $imageExitCode = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($imageExitCode -ne 0 -or -not $FrontendImage) { $FrontendImage = $placeholderImage }
+  }
   $env:CRA_RESOURCE_GROUP_NAME = $ResourceGroupName
   $env:CRA_LOCATION = $Location
   $env:CRA_POSTGRES_ADMIN_LOGIN = $AdminLogin
   $env:CRA_POSTGRES_ADMIN_PASSWORD = $plainPassword
   $env:CRA_CONTACT_EMAILS = $ContactEmails -join ','
-  $env:CRA_BACKEND_IMAGE = $BackendImage
-  $env:CRA_FRONTEND_IMAGE = $FrontendImage
+  if (-not $env:CRA_BACKEND_IMAGE) { $env:CRA_BACKEND_IMAGE = $BackendImage }
+  if (-not $env:CRA_FRONTEND_IMAGE) { $env:CRA_FRONTEND_IMAGE = $FrontendImage }
   $env:CRA_CHAT_CAPACITY = [string]$ChatCapacity
   $env:CRA_EMBEDDING_CAPACITY = [string]$EmbeddingCapacity
   $ErrorActionPreference = 'Continue'
