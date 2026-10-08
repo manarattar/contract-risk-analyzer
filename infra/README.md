@@ -36,6 +36,24 @@ python scripts/create_search_index.py
 
 `DATABASE_URL` is installed as a Container App secret. Storage shared-key access and OpenAI local-key auth are disabled. The budget amount is `10` in the subscription's billing currency; Azure determines whether that is EUR.
 
+## CI/CD
+
+Deploy the updated infrastructure once with `./infra/deploy.ps1` to create the user-assigned managed identity `contract-analyzer-github`, its GitHub OIDC federated credential, and role assignments. The deployment outputs `githubIdentityClientId`, `tenantId`, `subscriptionId`, `resourceGroup`, and `frontendUrl`. The identity has Contributor on the resource group because `az containerapp update` needs resource write access, plus Search Service Contributor on the Search service to create the index. This resource-group Contributor grant is broad; replace it with a custom role if tighter permissions are needed.
+
+Create the GitHub environment `azure` in repository Settings > Environments. Set these repository variables using the deployment outputs:
+
+```powershell
+gh variable set AZURE_CLIENT_ID --body '<githubIdentityClientId>'
+gh variable set AZURE_TENANT_ID --body '<tenantId>'
+gh variable set AZURE_SUBSCRIPTION_ID --body '<subscriptionId>'
+gh variable set AZURE_RESOURCE_GROUP --body '<resourceGroup>'
+gh variable set FRONTEND_URL --body '<frontendUrl>'
+```
+
+The federated credential trusts only `repo:manarattar/contract-risk-analyzer:environment:azure`. No Azure client secret or Entra app registration is required. CI runs on every push and pull request. Deploy runs after CI on pushes to `master` or `feat/azure-ready`, or by manual dispatch. It publishes SHA-tagged and `latest` backend/frontend images to GHCR, updates both Container Apps with SHA tags, creates the Search index, and checks `/api/health` through the frontend. The health check reports a stopped database without failing deployment.
+
+After the first image push, make **both GHCR packages public** in their package settings. Container Apps pull them anonymously; private packages require registry credentials that this deployment does not configure.
+
 ## Costs and demo schedule
 
 | Resource | Rough monthly cost while running |

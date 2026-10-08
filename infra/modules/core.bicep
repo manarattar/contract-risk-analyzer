@@ -235,3 +235,4 @@ output backendInternalFqdn string = backend.properties.configuration.ingress.fqd
 output openaiEndpoint string = openai.properties.endpoint
 output searchEndpoint string = 'https://${search.name}.search.windows.net'
 output storageAccountUrl string = storage.properties.primaryEndpoints.blob
+output searchServiceId string = search.id

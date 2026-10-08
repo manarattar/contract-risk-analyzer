@@ -27,8 +27,11 @@ try {
   $env:CRA_FRONTEND_IMAGE = $FrontendImage
   $env:CRA_CHAT_CAPACITY = [string]$ChatCapacity
   $env:CRA_EMBEDDING_CAPACITY = [string]$EmbeddingCapacity
-  & $az deployment sub what-if --subscription 'Azure for Students' --name 'contract-analyzer-phase2' --location $Location --parameters "$PSScriptRoot/main.bicepparam" --output json
-  if ($LASTEXITCODE -ne 0) { throw "Azure what-if failed: $LASTEXITCODE" }
+  $ErrorActionPreference = 'Continue'
+  & $az deployment sub what-if --subscription 'Azure for Students' --name 'contract-analyzer-phase2' --location $Location --parameters "$PSScriptRoot/main.bicepparam" --output json 2>&1 | Out-Host
+  $azExitCode = $LASTEXITCODE
+  $ErrorActionPreference = 'Stop'
+  if ($azExitCode -ne 0) { throw "Azure what-if failed: $azExitCode" }
 } finally {
   $plainPassword = $null
   'CRA_RESOURCE_GROUP_NAME', 'CRA_LOCATION', 'CRA_POSTGRES_ADMIN_LOGIN', 'CRA_POSTGRES_ADMIN_PASSWORD', 'CRA_CONTACT_EMAILS', 'CRA_BACKEND_IMAGE', 'CRA_FRONTEND_IMAGE', 'CRA_CHAT_CAPACITY', 'CRA_EMBEDDING_CAPACITY' | ForEach-Object { Remove-Item "Env:$_" -ErrorAction SilentlyContinue }

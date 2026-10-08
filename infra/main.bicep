@@ -18,6 +18,9 @@ param chatModelVersion string = '2025-08-07'
 param chatCapacity int = 10
 param embeddingCapacity int = 10
 param corsOrigins string = '*'
+param githubOwner string = 'manarattar'
+param githubRepo string = 'contract-risk-analyzer'
+param githubEnvironment string = 'azure'
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: resourceGroupName
@@ -51,8 +54,24 @@ module budget 'modules/budget.bicep' = {
   }
 }
 
+module githubIdentity 'modules/github-identity.bicep' = {
+  name: 'github-identity'
+  scope: rg
+  params: {
+    location: location
+    githubOwner: githubOwner
+    githubRepo: githubRepo
+    githubEnvironment: githubEnvironment
+    searchServiceId: core.outputs.searchServiceId
+  }
+}
+
 output frontendUrl string = core.outputs.frontendUrl
 output backendInternalFqdn string = core.outputs.backendInternalFqdn
 output openaiEndpoint string = core.outputs.openaiEndpoint
 output searchEndpoint string = core.outputs.searchEndpoint
 output storageAccountUrl string = core.outputs.storageAccountUrl
+output githubIdentityClientId string = githubIdentity.outputs.clientId
+output tenantId string = tenant().tenantId
+output subscriptionId string = subscription().subscriptionId
+output resourceGroup string = rg.name

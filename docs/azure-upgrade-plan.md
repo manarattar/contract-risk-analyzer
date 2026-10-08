@@ -73,8 +73,7 @@ Blob Data Contributor, Search Index Data Contributor, Cognitive Services OpenAI 
 teardown scripts.
 
 ## Phase 3 — CI/CD (GitHub Actions)
-PR: ruff, pytest, quick eval subset. Main: build backend image -> GHCR -> update Container
-App; frontend via Static Web Apps action. Azure login via OIDC federated credential.
+All pushes and pull requests run backend ruff and non-integration pytest, frontend lint/build, and Bicep build. Deploy runs after CI on `master`, `feat/azure-ready`, or manual dispatch. GitHub Actions signs in to Azure through an OIDC federated credential on the user-assigned managed identity `contract-analyzer-github` (the VU tenant does not permit an Entra app registration). The credential is limited to the `azure` GitHub environment. The identity can update Container Apps and create the AI Search index. Backend and frontend images are published to public GHCR packages and deployed by SHA tag to their respective Container Apps. The frontend image embeds `VITE_API_URL` at build time; the frontend URL routes `/api` through nginx. A final health request is informational because PostgreSQL may be stopped between demos.
 
 ## Phase 4 — Evaluation suite
 `evals/` golden set: contracts with labelled risky clauses + Q&A pairs. Metrics: risky-clause
