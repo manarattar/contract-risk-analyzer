@@ -1,6 +1,9 @@
 name: Evals
 on:
   workflow_dispatch:
+  # Push to an eval/* branch to evaluate any commit without opening a PR.
+  push:
+    branches: ['eval/**']
   pull_request:
     branches: [master]
     paths:
