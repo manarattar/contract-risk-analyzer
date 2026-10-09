@@ -45,6 +45,16 @@ module core 'modules/core.bicep' = {
   }
 }
 
+module workbook 'modules/workbook.bicep' = {
+  name: 'workbook'
+  scope: rg
+  params: {
+    location: location
+    namePrefix: namePrefix
+    insightsId: core.outputs.insightsId
+  }
+}
+
 module budget 'modules/budget.bicep' = {
   name: 'budget'
   scope: rg

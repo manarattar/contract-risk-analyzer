@@ -11,6 +11,7 @@ from app.schemas import (
 )
 from app.services.mock_analyzer import get_mock_analysis
 from app.services.risk_analyzer import (
+    BATCH_CLAUSE_PROMPT, CLAUSE_PROMPT, SYSTEM_MESSAGE,
     _extract_json, _clamp_score_to_category, _category_to_risk_level,
     _apply_contradiction_score_boost, _boost_contradiction_clauses,
     _derive_risk_level_from_score, _overall_score_from_clauses, _missing_clause_adjustment,
@@ -20,6 +21,15 @@ from app.schemas import ContradictionFinding
 # ---------------------------------------------------------------------------
 # Unit tests — no LLM calls
 # ---------------------------------------------------------------------------
+
+def test_clause_prompts_include_red_flags_without_unconditional_downgrade():
+    heading = "━━━ RED FLAG PATTERNS — score these High Risk (61–80) or Critical Risk (81–100) ━━━"
+    for prompt in (BATCH_CLAUSE_PROMPT, CLAUSE_PROMPT):
+        assert heading in prompt
+        assert "If in doubt, assign Acceptable Standard" not in prompt
+        assert "Do not downgrade a RED FLAG PATTERN" in prompt
+    assert "do not downgrade a genuine red flag" in SYSTEM_MESSAGE
+
 
 class TestJsonExtraction:
     def test_plain_json_object(self):

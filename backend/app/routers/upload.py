@@ -13,6 +13,7 @@ from app.services.clause_splitter import split_into_clauses
 from app.services import vector_store
 from app.services.mock_analyzer import get_mock_analysis
 from app.services.risk_analyzer import analyze_contract
+from app.telemetry import span
 
 router = APIRouter()
 
@@ -28,31 +29,8 @@ def _extension(filename: str) -> str:
 def _run_analysis(doc_id: str, file_path: str, file_type: str, db: Session):
     """Background task: parse → split → analyze → store."""
     try:
-        with get_storage().local_path(file_path) as path:
-            text = extract_text(path, file_type)
-        clauses = split_into_clauses(text)
-
-        settings = get_settings()
-        if settings.use_mock:
-            analysis = get_mock_analysis()
-        else:
-            analysis = analyze_contract(clauses, full_text=text)
-
-        # Store chunks in vector DB
-        vector_store.store_chunks(doc_id, clauses)
-
-        # Persist analysis to SQLite
-        analysis_row = Analysis(
-            document_id=doc_id,
-            analysis_json=analysis.model_dump_json(),
-        )
-        db.add(analysis_row)
-
-        doc = db.query(Document).filter(Document.id == doc_id).first()
-        if doc:
-            doc.status = "complete"
-        db.commit()
-
+        with span("pipeline.upload", document_id=doc_id, file_type=file_type):
+            _process_analysis(doc_id, file_path, file_type, db)
     except Exception as e:
         doc = db.query(Document).filter(Document.id == doc_id).first()
         if doc:
@@ -60,6 +38,36 @@ def _run_analysis(doc_id: str, file_path: str, file_type: str, db: Session):
             doc.error_message = str(e)
             db.commit()
         raise
+
+
+def _process_analysis(doc_id: str, file_path: str, file_type: str, db: Session):
+    with span("pipeline.parse", document_id=doc_id, file_type=file_type):
+        with get_storage().local_path(file_path) as path:
+            text = extract_text(path, file_type)
+    with span("pipeline.split", document_id=doc_id) as split_span:
+        clauses = split_into_clauses(text)
+        split_span.set_attribute("clause_count", len(clauses))
+
+    settings = get_settings()
+    with span("pipeline.analyse", document_id=doc_id, clause_count=len(clauses)) as analysis_span:
+        if settings.use_mock:
+            analysis = get_mock_analysis()
+        else:
+            analysis = analyze_contract(clauses, full_text=text)
+        analysis_span.set_attribute("overall_score", analysis.overall_risk_score)
+        analysis_span.set_attribute("risk_level", analysis.overall_risk_level.value)
+
+    with span("pipeline.embed_index", document_id=doc_id, clause_count=len(clauses),
+              vector_backend=settings.vector_backend):
+        vector_store.store_chunks(doc_id, clauses)
+
+    analysis_row = Analysis(document_id=doc_id, analysis_json=analysis.model_dump_json())
+    db.add(analysis_row)
+
+    doc = db.query(Document).filter(Document.id == doc_id).first()
+    if doc:
+        doc.status = "complete"
+    db.commit()
 
 
 @router.post("/upload", response_model=UploadResponse)

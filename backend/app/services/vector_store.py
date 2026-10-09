@@ -1,4 +1,7 @@
 from typing import List
+import time
+
+from app.telemetry import span, record_llm_usage, elapsed_ms
 
 _client = None
 
@@ -79,16 +82,24 @@ class AzureSearchStore:
         self.embeddings = AzureOpenAI(**options).embeddings
         self.deployment = settings.azure_openai_embedding_deployment
 
-    def _embed(self, texts):
-        return [item.embedding for item in self.embeddings.create(
-            model=self.deployment, input=texts).data]
+    def _embed(self, texts, stage="unknown"):
+        from app.config import get_settings
+        settings = get_settings()
+        with span("llm.embed", **{"gen_ai.system": "azure_openai",
+                                  "gen_ai.request.model": self.deployment,
+                                  "stage": stage}) as current:
+            start = time.perf_counter()
+            response = self.embeddings.create(model=self.deployment, input=texts)
+            record_llm_usage(current, response, self.deployment, stage, elapsed_ms(start),
+                             settings.text_embedding_3_small_eur_per_million, 0.0)
+            return [item.embedding for item in response.data]
 
     def store_chunks(self, doc_id, chunks):
         self.delete(doc_id)
         if not chunks:
             return
         texts = [chunk["text"] for chunk in chunks]
-        vectors = self._embed(texts)
+        vectors = self._embed(texts, stage="index")
         self.client.upload_documents([{"id": f"{doc_id}-{chunk['index']}",
                                        "doc_id": doc_id, "text": chunk["text"],
                                        "content_vector": vector}
@@ -104,7 +115,7 @@ class AzureSearchStore:
 
     def search(self, doc_id, query, n=4):
         from azure.search.documents.models import VectorizedQuery
-        vector = self._embed([query])[0]
+        vector = self._embed([query], stage="qa")[0]
         escaped = doc_id.replace("'", "''")
         results = self.client.search(
             search_text=None,

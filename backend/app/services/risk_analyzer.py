@@ -8,6 +8,7 @@ from openai import OpenAI
 from app.services.llm_client import get_llm_client
 
 from app.config import get_settings
+from app.telemetry import span, record_llm_usage, elapsed_ms, llm_retries
 from app.services.jev_judge import jev_available, judge_clauses
 from app.schemas import (
     ClauseAnalysis, ClauseCategory, AffectedParty,
@@ -53,8 +54,9 @@ SYSTEM_MESSAGE = (
     "You are calibrated and realistic: you recognize that most professional contracts "
     "contain standard clauses that are commercially normal and should not be flagged as risks. "
     "You distinguish clearly between real legal danger, ordinary contract structure, and minor "
-    "drafting improvements. When in doubt about whether something is a risk or normal practice, "
-    "lean toward recognising it as normal. "
+    "drafting improvements. When a clause resembles a standard, balanced mechanism and has "
+    "no concrete red flag, lean toward recognising it as normal; do not downgrade a genuine "
+    "red flag merely because standard clauses are usually acceptable. "
     "Always return valid JSON only — no explanations, no markdown, no preamble."
 )
 QA_SYSTEM_MESSAGE = (
@@ -114,8 +116,18 @@ Contract context: {contract_type} | Apparently weaker party: {weaker_party}
 • 0–20: Best Practice • 21–40: Acceptable Standard / Minor Improvement
 • 41–60: Moderate Risk • 61–80: High Risk • 81–100: Critical Risk
 
+━━━ RED FLAG PATTERNS — score these High Risk (61–80) or Critical Risk (81–100) ━━━
+• Asymmetric rights or obligations: materially different notice periods, termination rights, liability exposure, or confidentiality durations.
+• One party may change price, scope, or terms unilaterally without the other's consent or an exit right.
+• Uncapped liability or indemnity for one party only, or exclusions covering a party's own negligence or gross negligence.
+• Disclaimers of core performance, correctness, or legality of the deliverable.
+• Payment amount, timing, or obligation left undefined or conditional on one party's discretion or satisfaction.
+• Automatic renewal with a long notice window or notice windows that favour one party.
+• Termination at will without notice combined with unclear payment or wind-down obligations.
+• One party may disclose or reuse the other's confidential information or IP without consent.
+
 ━━━ FALSE POSITIVE GUARDRAIL ━━━
-Before assigning Moderate Risk or higher: Is this actually harmful, or a normal contractual mechanism? Would a competent commercial lawyer accept this? If in doubt, assign Acceptable Standard.
+Apply this guardrail only to the STANDARD CLAUSE BASELINES and comparable normal, balanced mechanisms. Check whether a concrete harm remains before assigning Moderate Risk or higher. Do not downgrade a RED FLAG PATTERN because of this guardrail.
 
 ━━━ CLAUSES ━━━
 {clauses_text}
@@ -159,12 +171,18 @@ Previous clause: {prev_summary}
 • 61–80: High Risk — significant exposure, unfairness, or uncertainty
 • 81–100: Critical Risk — self-defeating, likely unenforceable, removes essential protections
 
+━━━ RED FLAG PATTERNS — score these High Risk (61–80) or Critical Risk (81–100) ━━━
+• Asymmetric rights or obligations: materially different notice periods, termination rights, liability exposure, or confidentiality durations.
+• One party may change price, scope, or terms unilaterally without the other's consent or an exit right.
+• Uncapped liability or indemnity for one party only, or exclusions covering a party's own negligence or gross negligence.
+• Disclaimers of core performance, correctness, or legality of the deliverable.
+• Payment amount, timing, or obligation left undefined or conditional on one party's discretion or satisfaction.
+• Automatic renewal with a long notice window or notice windows that favour one party.
+• Termination at will without notice combined with unclear payment or wind-down obligations.
+• One party may disclose or reuse the other's confidential information or IP without consent.
+
 ━━━ FALSE POSITIVE GUARDRAIL ━━━
-Before assigning Moderate Risk or higher, confirm:
-1. Is this actually harmful, or just a normal contractual mechanism?
-2. Would a competent commercial lawyer normally accept this clause?
-3. Is there a real legal/commercial risk, or just room for improvement?
-If the answers suggest normal practice, assign Acceptable Standard or Minor Improvement.
+Apply this guardrail only to the STANDARD CLAUSE BASELINES and comparable normal, balanced mechanisms. Check whether a concrete harm remains before assigning Moderate Risk or higher. Do not downgrade a RED FLAG PATTERN because of this guardrail.
 
 ━━━ CATEGORIES ━━━
 Best Practice — clear, balanced, commercially standard
@@ -328,28 +346,36 @@ def _get_client() -> OpenAI:
 
 def _call_llm(
     client: OpenAI, settings, prompt: str, temperature: float = 0.2,
-    system_message: str = SYSTEM_MESSAGE,
+    system_message: str = SYSTEM_MESSAGE, stage: str = "unknown",
 ) -> str:
-    # Retry up to 3 times on rate-limit (429) with 65-second backoff
-    for attempt in range(3):
-        try:
-            kwargs = {
-                "model": (settings.azure_openai_chat_deployment
-                          if settings.llm_provider == "azure_openai" else settings.model_name),
-                "messages": [
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt},
-                ],
-            }
-            if settings.llm_use_temperature:
-                kwargs["temperature"] = temperature
-            response = client.chat.completions.create(**kwargs)
-            return response.choices[0].message.content
-        except openai.RateLimitError:
-            if attempt < 1:
-                time.sleep(30)
-            else:
-                raise
+    model = (settings.azure_openai_chat_deployment
+             if settings.llm_provider == "azure_openai" else settings.model_name)
+    with span("llm.chat", **{"gen_ai.system": settings.llm_provider,
+                             "gen_ai.request.model": model, "stage": stage}) as current:
+        for attempt in range(3):
+            try:
+                kwargs = {
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": prompt},
+                    ],
+                }
+                if settings.llm_use_temperature:
+                    kwargs["temperature"] = temperature
+                start = time.perf_counter()
+                response = client.chat.completions.create(**kwargs)
+                record_llm_usage(current, response, model, stage, elapsed_ms(start),
+                                 settings.gpt_5_mini_input_eur_per_million,
+                                 settings.gpt_5_mini_output_eur_per_million)
+                current.set_attribute("llm.retry_count", attempt)
+                return response.choices[0].message.content
+            except openai.RateLimitError:
+                llm_retries.add(1, {"model": model, "stage": stage})
+                if attempt < 1:
+                    time.sleep(30)
+                else:
+                    raise
 
 
 def _category_to_risk_level(category: str) -> RiskLevel:
@@ -368,7 +394,7 @@ def _detect_context(full_text: str) -> dict:
     settings = get_settings()
     client = _get_client()
     try:
-        content = _call_llm(client, settings, DETECT_PROMPT.format(text=full_text[:3000]))
+        content = _call_llm(client, settings, DETECT_PROMPT.format(text=full_text[:3000]), stage="detect")
         return _extract_json(content)
     except Exception:
         return {
@@ -402,7 +428,7 @@ def analyze_clause(
         try:
             if attempt == 1:
                 prompt += "\n\nReturn ONLY the JSON object. No other text."
-            raw = _call_llm(client, settings, prompt)
+            raw = _call_llm(client, settings, prompt, stage="clauses")
             data = _extract_json(raw)
             category_str = data.get("category", "Moderate Risk")
             data["original_text"] = text
@@ -451,7 +477,7 @@ def _analyze_clauses_batch(
         try:
             if attempt == 1:
                 prompt += "\n\nReturn ONLY the JSON array. No other text."
-            raw = _call_llm(client, settings, prompt)
+            raw = _call_llm(client, settings, prompt, stage="clauses")
             items = _extract_json(raw)
             if not isinstance(items, list):
                 items = [items]
@@ -505,7 +531,7 @@ def _analyze_clauses_batch_with_jev(
     texts: list = []
     for attempt in range(2):
         try:
-            items = _extract_json(_call_llm(client, settings, prompt))
+            items = _extract_json(_call_llm(client, settings, prompt, stage="clauses"))
             texts = items if isinstance(items, list) else [items]
             break
         except Exception:
@@ -548,7 +574,7 @@ def _analyze_contradictions(analyzed_clauses: List[ClauseAnalysis]) -> List[Cont
         f"[{c.clause_title}]\n{c.original_text[:600]}"
         for c in analyzed_clauses
     )
-    raw = _call_llm(client, settings, CONTRADICTION_PROMPT.format(clauses_text=clauses_text), temperature=0.1)
+    raw = _call_llm(client, settings, CONTRADICTION_PROMPT.format(clauses_text=clauses_text), temperature=0.1, stage="contradictions")
     result = _extract_json(raw)
     if not isinstance(result, list):
         return []
@@ -641,7 +667,8 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     client = _get_client()
 
     # Stage 1: detect context
-    context = _detect_context(full_text) if full_text else {}
+    with span("pipeline.analyse.detect"):
+        context = _detect_context(full_text) if full_text else {}
     contract_type = context.get("contract_type", "Unknown")
     weaker_party = context.get("apparent_weaker_party", "Unknown")
 
@@ -652,7 +679,8 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     batches = [clauses[i:i + BATCH_SIZE] for i in range(0, len(clauses), BATCH_SIZE)]
     for batch in batches:
         try:
-            results = _analyze_clauses_batch(batch, contract_type, weaker_party)
+            with span("pipeline.analyse.clauses", batch_size=len(batch)):
+                results = _analyze_clauses_batch(batch, contract_type, weaker_party)
             analyzed_clauses.extend(results)
             for r in results:
                 found_types.add(r.clause_type)
@@ -680,13 +708,14 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     missing_types = [t for t in IMPORTANT_CLAUSE_TYPES if t not in found_types]
     clause_score = _overall_score_from_clauses(analyzed_clauses)
 
-    summary_raw = _call_llm(client, settings, SUMMARY_PROMPT.format(
+    with span("pipeline.analyse.missing"):
+        summary_raw = _call_llm(client, settings, SUMMARY_PROMPT.format(
         contract_type=contract_type,
         clause_summary=clause_summary,
         clause_score=clause_score,
         missing_types=", ".join(missing_types) if missing_types else "None",
         found_types=", ".join(found_types) if found_types else "None",
-    ))
+    ), stage="missing")
     summary_data = _extract_json(summary_raw)
 
     # Parse quality_summary
@@ -717,7 +746,8 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
     # Stage 4: contradiction validation
     contradictions: List[ContradictionFinding] = []
     try:
-        contradictions = _analyze_contradictions(analyzed_clauses)
+        with span("pipeline.analyse.contradictions"):
+            contradictions = _analyze_contradictions(analyzed_clauses)
     except Exception:
         pass
 
@@ -728,8 +758,11 @@ def analyze_contract(clauses: List[Dict], full_text: str = "") -> ContractAnalys
             summary_data["overall_risk_score"], contradictions
         )
 
-    final_score = summary_data["overall_risk_score"]
-    final_level = _derive_risk_level_from_score(final_score)
+    with span("pipeline.analyse.score") as score_span:
+        final_score = summary_data["overall_risk_score"]
+        final_level = _derive_risk_level_from_score(final_score)
+        score_span.set_attribute("overall_score", final_score)
+        score_span.set_attribute("risk_level", final_level.value)
 
     return ContractAnalysis(
         document_summary=summary_data.get("document_summary", ""),
@@ -753,7 +786,7 @@ def answer_question(question: str, context_chunks: List[str]) -> str:
     context = "\n\n---\n\n".join(context_chunks)
     answer = _call_llm(
         client, settings, QA_PROMPT.format(context=context, question=question),
-        temperature=0.3, system_message=QA_SYSTEM_MESSAGE,
+        temperature=0.3, system_message=QA_SYSTEM_MESSAGE, stage="qa",
     ).strip()
     try:
         parsed = json.loads(answer)

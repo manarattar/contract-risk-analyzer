@@ -38,7 +38,6 @@ jobs:
         with:
           context: frontend
           push: true
-          build-args: VITE_API_URL=${{ vars.FRONTEND_URL }}
           tags: |
             ghcr.io/manarattar/contract-risk-analyzer-frontend:${{ github.sha }}
             ghcr.io/manarattar/contract-risk-analyzer-frontend:latest

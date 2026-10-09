@@ -81,8 +81,10 @@ def test_stability():
 
 def test_golden_schema():
     files = list((Path(__file__).parents[1] / "evals" / "golden").glob("*.json"))
-    assert len(files) == 5
-    assert {json.loads(path.read_text())["id"] for path in files} == {"bad", "good", "incomplete", "nda", "saas"}
+    assert len(files) == 6
+    assert {json.loads(path.read_text(encoding="utf-8"))["id"] for path in files} == {
+        "bad", "good", "incomplete", "nda", "saas", "consulting",
+    }
     for path in files:
         data = json.loads(path.read_text(encoding="utf-8"))
         assert data["id"] and data["title"] and data["text"]

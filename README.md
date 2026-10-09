@@ -150,3 +150,7 @@ contract-risk-analyzer/
 ## Evaluation suite
 
 `backend/evals/` contains five golden contracts and a service-level evaluation runner. See [the evaluation guide](backend/evals/README.md) for setup, metrics, and reports.
+
+## Observability
+
+Set APPLICATIONINSIGHTS_CONNECTION_STRING to enable Azure Monitor tracing and metrics. See [observability](docs/observability.md) for the span tree, workbook, queries, and cost estimates.

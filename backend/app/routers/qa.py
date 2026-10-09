@@ -5,6 +5,7 @@ from app.database import get_db, Document
 from app.schemas import QARequest, QAResponse
 from app.services import vector_store
 from app.config import get_settings
+from app.telemetry import span
 
 router = APIRouter()
 
@@ -24,7 +25,14 @@ def ask_question(request: QARequest, db: Session = Depends(get_db)):
     if doc.status != "complete":
         raise HTTPException(400, "Analysis still in progress. Please wait.")
 
-    chunks = vector_store.search(request.document_id, request.question, n=4)
+    with span("pipeline.qa", document_id=request.document_id):
+        return _answer(request)
+
+
+def _answer(request: QARequest) -> QAResponse:
+    with span("pipeline.qa.search", document_id=request.document_id,
+              vector_backend=get_settings().vector_backend):
+        chunks = vector_store.search(request.document_id, request.question, n=4)
 
     settings = get_settings()
     if settings.use_mock or not chunks:
@@ -37,7 +45,8 @@ def ask_question(request: QARequest, db: Session = Depends(get_db)):
         )
 
     from app.services.risk_analyzer import answer_question
-    answer = answer_question(request.question, chunks)
+    with span("pipeline.qa.answer", document_id=request.document_id):
+        answer = answer_question(request.question, chunks)
     return QAResponse(
         answer=answer + "\n\nNote: This is AI-generated analysis for informational purposes only and does not constitute legal advice.",
         sources=chunks,

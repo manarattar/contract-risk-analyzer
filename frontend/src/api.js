@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
+  baseURL: apiBaseUrl,
   timeout: 120000,
 });
 
@@ -24,7 +26,7 @@ export const askQuestion = (documentId, question) =>
   api.post("/api/qa", { document_id: documentId, question });
 
 export const getReportUrl = (documentId) =>
-  `${api.defaults.baseURL}/api/report/${documentId}`;
+  `${apiBaseUrl}/api/report/${documentId}`;
 
 export const checkHealth = () => api.get("/api/health");
 

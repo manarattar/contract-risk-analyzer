@@ -182,6 +182,7 @@ resource backend 'Microsoft.App/containerApps@2025-01-01' = {
           { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT', value: embedding.name }
           { name: 'AZURE_OPENAI_API_VERSION', value: '2024-10-21' }
           { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: insights.properties.ConnectionString }
+          { name: 'OTEL_SERVICE_NAME', value: 'contract-analyzer-backend' }
           { name: 'CORS_ORIGINS', value: corsOrigins }
         ]
         resources: { cpu: json('0.5'), memory: '1Gi' }
@@ -247,3 +248,4 @@ output storageAccountUrl string = storage.properties.primaryEndpoints.blob
 output searchServiceId string = search.id
 
 output openaiAccountName string = openai.name
+output insightsId string = insights.id

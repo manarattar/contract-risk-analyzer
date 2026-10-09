@@ -1,0 +1,34 @@
+{
+  "id": "consulting",
+  "title": "Independent Consulting Agreement",
+  "text": "INDEPENDENT CONSULTING AGREEMENT\n\nThis Agreement is between Alderfield Analytics BV (Client) and Mira Chen, an independent consultant (Consultant), effective 1 June 2025. The engagement concerns a market-entry assessment for the Netherlands and Belgium.\n\n1. Services\nConsultant will interview stakeholders, review materials supplied by Client, and deliver a written market-entry assessment and presentation by 30 September 2025. Changes to scope require a written change order signed by both parties.\n\n2. Fees\nClient will pay a fixed fee of EUR 18,000 in three equal instalments on signing, delivery of the draft, and delivery of the final assessment. Each invoice is due within 30 days, except that Client may withhold any instalment indefinitely whenever its strategy director is dissatisfied with the usefulness of the work, without identifying defects or giving Consultant an opportunity to cure.\n\n3. Cooperation\nClient will provide reasonable access to relevant staff and documents within five business days of a written request. Consultant is not responsible for delay caused by Client's late access, and the delivery date will move by the same number of days.\n\n4. Materials\nClient owns the final assessment and presentation after full payment. Consultant also assigns to Client all ownership of any templates, analytical models, code libraries, and methods Consultant developed before this Agreement if used at any point in performing the services, with no licence back to Consultant.\n\n5. Information\nEach party will use the other's non-public information only for this engagement and protect it with reasonable care for three years after termination. Information already public, independently developed, or required by law to be disclosed is excluded; legally required disclosure must be notified in advance where permitted.\n\n6. Availability\nDuring the engagement and for two years afterward, Consultant may not provide any advisory or analytical services to any business operating in Europe in any industry in which Client or any affiliate has operated, even where the services are unrelated to this project.\n\n7. Responsibility\nEach party's aggregate liability is capped at the fees paid or payable under this Agreement, except for fraud, wilful misconduct, and misuse of the other party's confidential information. Neither party is liable for remote consequential losses.\n\n8. Ending the Engagement\nEither party may terminate for material breach if the breach is not cured within 15 days after written notice. Client will pay for conforming work completed before termination, and Consultant will hand over completed paid-for materials within ten business days.\n\n9. Process\nThe laws of the Netherlands govern this Agreement. The parties will first attempt good-faith negotiation for 20 days, then submit any unresolved dispute to the courts of Amsterdam. Amendments must be in writing and signed by both parties.\n",
+  "clauses": [
+    {"match": "1. Services", "expected_risk": "Low"},
+    {"match": "2. Fees", "expected_risk": "High"},
+    {"match": "3. Cooperation", "expected_risk": "Low"},
+    {"match": "4. Materials", "expected_risk": "High"},
+    {"match": "5. Information", "expected_risk": "Low"},
+    {"match": "6. Availability", "expected_risk": "High"},
+    {"match": "7. Responsibility", "expected_risk": "Low"},
+    {"match": "8. Ending the Engagement", "expected_risk": "Low"},
+    {"match": "9. Process", "expected_risk": "Low"}
+  ],
+  "expected_missing": [],
+  "qa": [
+    {
+      "question": "If Client supplies requested documents three business days late, what happens to the assessment deadline?",
+      "evidence": "the delivery date will move by the same number of days",
+      "must_include": [["three days", "3 days", "same number of days"]]
+    },
+    {
+      "question": "Can Client withhold an instalment merely because its strategy director is dissatisfied, without specifying a defect or allowing a cure?",
+      "evidence": "Client may withhold any instalment indefinitely whenever its strategy director is dissatisfied with the usefulness of the work, without identifying defects or giving Consultant an opportunity to cure",
+      "must_include": [["yes", "may", "can"], ["without identifying defects", "without specifying defects", "without giving", "no opportunity to cure", "indefinitely"]]
+    },
+    {
+      "question": "If an uncured material breach ends the engagement, what work must Client pay for and when must Consultant hand over materials?",
+      "evidence": "Client will pay for conforming work completed before termination, and Consultant will hand over completed paid-for materials within ten business days",
+      "must_include": [["conforming work", "completed work"], ["ten business days", "10 business days"]]
+    }
+  ]
+}

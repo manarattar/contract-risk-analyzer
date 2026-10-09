@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     jev_model: str = "jev-latest"
     mock_mode: bool = False
     cors_origins: str = "*"  # comma-separated URLs, or "*" for all
+    # EUR per 1M tokens; estimates only, override for your Azure pricing.
+    gpt_5_mini_input_eur_per_million: float = 0.25
+    gpt_5_mini_output_eur_per_million: float = 2.00
+    text_embedding_3_small_eur_per_million: float = 0.02
 
     @property
     def use_mock(self) -> bool:
