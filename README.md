@@ -147,9 +147,13 @@ contract-risk-analyzer/
 | POST | `/api/qa` | Ask a question |
 | GET | `/api/report/{id}` | Download PDF report |
 | GET | `/api/health` | Health check |
+## Azure deployment
+
+The `feat/azure-ready` branch runs on Azure at https://azure-contracts.manarattar.com, separate from the original deployment. See the [case study](docs/case-study.md) and [infra/](infra/README.md).
+
 ## Evaluation suite
 
-`backend/evals/` contains five golden contracts and a service-level evaluation runner. See [the evaluation guide](backend/evals/README.md) for setup, metrics, and reports.
+`backend/evals/` contains six golden contracts and a service-level evaluation runner. See [the evaluation guide](backend/evals/README.md) for setup and metrics, and [results](docs/evals/README.md) for the latest runs.
 
 ## Observability
 

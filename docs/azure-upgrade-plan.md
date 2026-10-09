@@ -1,5 +1,7 @@
 # Azure upgrade plan — Contract Risk Analyzer
 
+**Status (2026-10-09):** all six phases done. Phase 6 changed scope: the Azure version is a separate deployment at azure-contracts.manarattar.com and contracts.manarattar.com stays on its original host. See `docs/case-study.md`.
+
 Goal: run the existing app on Azure with production engineering around it (IaC, CI/CD,
 evals, observability), **without changing what the product does**. Every phase must keep
 the current local / Contabo setup working (local backends stay the default).
